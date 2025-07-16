@@ -1,1 +1,8 @@
+hash_file
+hash_directory
+get_file_timestamps
+buscar_sospechosos
+extraer_exif
+extraer_pdf_meta
+extraer_iocs
 
