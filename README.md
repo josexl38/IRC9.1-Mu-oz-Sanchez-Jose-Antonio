@@ -51,6 +51,12 @@ python cyberscope.py --exif imagen.jpg --json
 # Análisis web
 python cyberscope.py --webscan https://ejemplo.com --pdf
 
+# Pentesting
+python cyberscope.py --portscan 192.168.1.1 --pdf
+python cyberscope.py --vulnscan https://ejemplo.com --json
+python cyberscope.py --sslcheck ejemplo.com
+python cyberscope.py --paramfuzz https://ejemplo.com/search
+
 # Extraer IoCs de un archivo
 python cyberscope.py --ioc log.txt --json --pdf
 ```
@@ -66,6 +72,10 @@ python cyberscope.py --ioc log.txt --json --pdf
 - ✅ Fuzzing de directorios
 - ✅ Consultas WHOIS e información de IPs
 - ✅ Generación de reportes en PDF y JSON
+- ✅ Escaneo de puertos TCP
+- ✅ Detección de vulnerabilidades web básicas
+- ✅ Análisis de certificados SSL
+- ✅ Fuzzing de parámetros web
 
 ### Dependencias:
 

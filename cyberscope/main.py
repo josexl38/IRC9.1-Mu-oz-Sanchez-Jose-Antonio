@@ -18,6 +18,13 @@ from core.webscan import (
 )
 from core.osint import whois_lookup, ip_lookup
 from core.report import exportar_json, generar_reporte_pdf
+from core.pentesting import (
+    escanear_puertos,
+    detectar_vulnerabilidades_web,
+    analizar_certificado_ssl,
+    fuzzing_parametros_web,
+    escaneo_completo_pentesting
+)
 
 
 def main():
@@ -34,6 +41,11 @@ Ejemplos de uso:
     python main.py --webscan https://miweb.com --pdf
     python main.py --dirscan https://miweb.com wordlist.txt
     python main.py --whois openai.com --ipinfo 8.8.8.8
+    python main.py --portscan 192.168.1.1
+    python main.py --vulnscan https://ejemplo.com
+    python main.py --sslcheck ejemplo.com
+    python main.py --paramfuzz https://ejemplo.com/search
+    python main.py --pentest https://ejemplo.com
         """
     )
 
@@ -48,6 +60,13 @@ Ejemplos de uso:
     parser.add_argument("--logincheck", help="Detectar formularios de login")
     parser.add_argument("--whois", help="Consulta WHOIS de dominio")
     parser.add_argument("--ipinfo", help="Lookup de IP")
+
+    # Argumentos de pentesting
+    parser.add_argument("--portscan", help="Escanear puertos de un host")
+    parser.add_argument("--vulnscan", help="Detectar vulnerabilidades web en URL")
+    parser.add_argument("--sslcheck", help="Analizar certificado SSL de un host")
+    parser.add_argument("--paramfuzz", help="Fuzzing de parámetros web en URL")
+    parser.add_argument("--pentest", help="Escaneo completo de pentesting")
 
     # Salida
     parser.add_argument("--pdf", action="store_true", help="Generar reporte PDF")
@@ -112,6 +131,22 @@ Ejemplos de uso:
 
     if args.ipinfo:
         ip_lookup(args.ipinfo)
+
+    # Pentesting
+    if args.portscan:
+        escanear_puertos(args.portscan)
+
+    if args.vulnscan:
+        detectar_vulnerabilidades_web(args.vulnscan)
+
+    if args.sslcheck:
+        analizar_certificado_ssl(args.sslcheck)
+
+    if args.paramfuzz:
+        fuzzing_parametros_web(args.paramfuzz)
+
+    if args.pentest:
+        escaneo_completo_pentesting(args.pentest)
 
     # Reportes
     if args.json:

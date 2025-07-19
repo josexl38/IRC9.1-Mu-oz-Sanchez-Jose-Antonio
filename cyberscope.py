@@ -444,6 +444,136 @@ def ip_lookup(ip: str):
     except Exception as e:
         FINDINGS.append(f"[ERROR] IP Lookup falló: {e}")
 
+# === HERRAMIENTAS DE PENTESTING ===
+
+def escanear_puertos(host: str, puertos: list = None, timeout: int = 1) -> dict:
+    """Escanea puertos TCP en un host específico."""
+    if puertos is None:
+        puertos = [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 993, 995, 1433, 1521, 3306, 3389, 5432, 5900, 8080, 8443]
+    
+    FINDINGS.append(f"[PORTSCAN] Iniciando escaneo de puertos en {host}")
+    
+    resultados = {"host": host, "abiertos": [], "cerrados": []}
+    
+    for puerto in puertos:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(timeout)
+            resultado = sock.connect_ex((host, puerto))
+            
+            if resultado == 0:
+                resultados["abiertos"].append(puerto)
+                FINDINGS.append(f"[PORT_OPEN] {host}:{puerto} - ABIERTO")
+            else:
+                resultados["cerrados"].append(puerto)
+                
+            sock.close()
+        except Exception as e:
+            logger.debug(f"Error escaneando puerto {puerto}: {e}")
+    
+    FINDINGS.append(f"[PORTSCAN_RESULT] {host} - Abiertos: {len(resultados['abiertos'])}")
+    return resultados
+
+def detectar_vulnerabilidades_web(url: str) -> dict:
+    """Detecta vulnerabilidades web comunes."""
+    FINDINGS.append(f"[VULNSCAN] Iniciando detección de vulnerabilidades en {url}")
+    
+    vulnerabilidades = {"sql_injection": [], "xss": [], "directory_traversal": []}
+    
+    try:
+        # SQL Injection básico
+        sql_payloads = ["'", "1' OR '1'='1", "'; DROP TABLE users; --"]
+        for payload in sql_payloads:
+            try:
+                test_url = f"{url}?id={payload}"
+                r = requests.get(test_url, timeout=5)
+                sql_errors = ["mysql_fetch_array", "ORA-01756", "Microsoft OLE DB Provider"]
+                
+                for error in sql_errors:
+                    if error.lower() in r.text.lower():
+                        vulnerabilidades["sql_injection"].append({"payload": payload, "url": test_url})
+                        FINDINGS.append(f"[VULN_SQL] Posible SQL Injection: {test_url}")
+                        break
+            except:
+                continue
+        
+        # XSS básico
+        xss_payloads = ["<script>alert('XSS')</script>", "<img src=x onerror=alert('XSS')>"]
+        for payload in xss_payloads:
+            try:
+                test_url = f"{url}?search={payload}"
+                r = requests.get(test_url, timeout=5)
+                if payload in r.text:
+                    vulnerabilidades["xss"].append({"payload": payload, "url": test_url})
+                    FINDINGS.append(f"[VULN_XSS] Posible XSS: {test_url}")
+            except:
+                continue
+                
+    except Exception as e:
+        FINDINGS.append(f"[VULNSCAN_ERROR] Error: {e}")
+    
+    total_vulns = sum(len(v) for v in vulnerabilidades.values())
+    FINDINGS.append(f"[VULNSCAN_RESULT] {total_vulns} vulnerabilidades encontradas")
+    return vulnerabilidades
+
+def analizar_certificado_ssl(hostname: str, port: int = 443) -> dict:
+    """Analiza el certificado SSL de un servidor."""
+    FINDINGS.append(f"[SSL_ANALYSIS] Analizando certificado SSL de {hostname}:{port}")
+    
+    try:
+        import ssl
+        context = ssl.create_default_context()
+        
+        with socket.create_connection((hostname, port), timeout=10) as sock:
+            with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                cert = ssock.getpeercert()
+                
+                cert_info = {
+                    "subject": dict(x[0] for x in cert.get('subject', [])),
+                    "issuer": dict(x[0] for x in cert.get('issuer', [])),
+                    "not_after": cert.get('notAfter')
+                }
+                
+                FINDINGS.append(f"[SSL_CERT] Emisor: {cert_info['issuer'].get('organizationName', 'N/A')}")
+                FINDINGS.append(f"[SSL_CERT] Válido hasta: {cert_info['not_after']}")
+                
+                return cert_info
+                
+    except Exception as e:
+        FINDINGS.append(f"[SSL_ERROR] Error: {e}")
+        return {"error": str(e)}
+
+def fuzzing_parametros_web(url: str) -> dict:
+    """Realiza fuzzing básico de parámetros web."""
+    FINDINGS.append(f"[PARAM_FUZZ] Iniciando fuzzing de parámetros en {url}")
+    
+    parametros = ["id", "user", "page", "file", "search"]
+    payloads = ["admin", "test", "1", "../etc/passwd", "' OR '1'='1"]
+    
+    resultados = {"interesting": []}
+    
+    try:
+        base_response = requests.get(url, timeout=5)
+        base_length = len(base_response.text)
+        
+        for param in parametros:
+            for payload in payloads:
+                try:
+                    test_url = f"{url}?{param}={payload}"
+                    response = requests.get(test_url, timeout=3)
+                    
+                    if abs(len(response.text) - base_length) > 100:
+                        resultados["interesting"].append(test_url)
+                        FINDINGS.append(f"[PARAM_INTERESTING] {test_url}")
+                        
+                except:
+                    continue
+                    
+    except Exception as e:
+        FINDINGS.append(f"[PARAM_FUZZ_ERROR] Error: {e}")
+    
+    FINDINGS.append(f"[PARAM_FUZZ_RESULT] {len(resultados['interesting'])} respuestas interesantes")
+    return resultados
 
 def exportar_json(nombre: str = "hallazgos_forenses.json") -> bool:
     """
@@ -584,6 +714,12 @@ Ejemplos de uso:
     parser.add_argument("--whois", help="Consulta WHOIS de un dominio")
     parser.add_argument("--ipinfo", help="Lookup de IP (ASN, país, etc)")
 
+    # Argumentos de pentesting
+    parser.add_argument("--portscan", help="Escanear puertos de un host")
+    parser.add_argument("--vulnscan", help="Detectar vulnerabilidades web en URL")
+    parser.add_argument("--sslcheck", help="Analizar certificado SSL de un host")
+    parser.add_argument("--paramfuzz", help="Fuzzing de parámetros web en URL")
+
     # Argumentos de salida
     parser.add_argument("--pdf", action="store_true", help="Generar reporte PDF")
     parser.add_argument("--json", action="store_true", help="Exportar hallazgos a JSON")
@@ -657,6 +793,23 @@ Ejemplos de uso:
     if args.ipinfo:
         logger.info(f"Consultando IP info de: {args.ipinfo}")
         ip_lookup(args.ipinfo)
+
+    # Pentesting
+    if args.portscan:
+        logger.info(f"Escaneando puertos de: {args.portscan}")
+        escanear_puertos(args.portscan)
+
+    if args.vulnscan:
+        logger.info(f"Detectando vulnerabilidades en: {args.vulnscan}")
+        detectar_vulnerabilidades_web(args.vulnscan)
+
+    if args.sslcheck:
+        logger.info(f"Analizando certificado SSL de: {args.sslcheck}")
+        analizar_certificado_ssl(args.sslcheck)
+
+    if args.paramfuzz:
+        logger.info(f"Fuzzing de parámetros en: {args.paramfuzz}")
+        fuzzing_parametros_web(args.paramfuzz)
 
     
     # Generar reportes
