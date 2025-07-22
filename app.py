@@ -24,6 +24,8 @@ from cyberscope.core.pentesting import (
 )
 from cyberscope.core.report import exportar_json, generar_reporte_pdf
 from cyberscope.core.utils import FINDINGS, logger
+from cyberscope.core.chatgpt_analyzer import ChatGPTAnalyzer, ChatGPTFallbackAnalyzer
+from cyberscope.core.pdf_generator import CyberScopePDFGenerator
 
 app = Flask(__name__)
 app.secret_key = 'cyberscope-secret-key-2024'
@@ -38,6 +40,8 @@ os.makedirs(app.config['REPORTS_FOLDER'], exist_ok=True)
 # Almacenamiento en memoria para análisis en progreso
 analysis_status = {}
 
+# Configuración de ChatGPT (opcional)
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')  # Variable de entorno opcional
 def clear_findings():
     """Limpiar hallazgos anteriores"""
     global FINDINGS
@@ -112,19 +116,68 @@ def analyze_urls_background(urls, report_id, analysis_types):
             
             time.sleep(1)  # Pausa entre URLs
         
+        # Análisis con ChatGPT
+        analysis_status[report_id]['progress'] = 85
+        analysis_status[report_id]['current_url'] = 'Analizando con IA...'
+        
+        chatgpt_analysis = None
+        try:
+            if OPENAI_API_KEY:
+                # Usar ChatGPT API
+                chatgpt_analyzer = ChatGPTAnalyzer(OPENAI_API_KEY)
+                target_info = {
+                    'url': urls[0] if urls else 'Multiple URLs',
+                    'analysis_types': analysis_types,
+                    'timestamp': datetime.now().isoformat()
+                }
+                chatgpt_analysis = chatgpt_analyzer.analyze_findings_with_chatgpt(FINDINGS, target_info)
+            else:
+                # Usar análisis de respaldo
+                fallback_analyzer = ChatGPTFallbackAnalyzer()
+                target_info = {
+                    'url': urls[0] if urls else 'Multiple URLs',
+                    'analysis_types': analysis_types,
+                    'timestamp': datetime.now().isoformat()
+                }
+                chatgpt_analysis = fallback_analyzer.analyze_findings_with_rules(FINDINGS, target_info)
+        except Exception as e:
+            logger.error(f"Error en análisis ChatGPT: {e}")
+            FINDINGS.append(f"[CHATGPT_ERROR] Error en análisis IA: {str(e)}")
         # Generar reportes
         analysis_status[report_id]['progress'] = 90
         analysis_status[report_id]['current_url'] = 'Generando reportes...'
         
+        # Preparar datos completos para el reporte
+        complete_analysis_data = {
+            'target_info': {
+                'url': urls[0] if urls else 'Multiple URLs',
+                'analysis_types': analysis_types,
+                'timestamp': datetime.now().isoformat(),
+                'total_urls': len(urls)
+            },
+            'findings': FINDINGS.copy(),
+            'chatgpt_analysis': chatgpt_analysis
+        }
+        
         # Exportar JSON
         json_filename = f"reporte_{report_id}.json"
         json_path = os.path.join(app.config['REPORTS_FOLDER'], json_filename)
-        exportar_json(json_path)
         
-        # Generar PDF
+        # Guardar análisis completo en JSON
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(complete_analysis_data, f, indent=2, ensure_ascii=False)
+        
+        # Generar PDF mejorado
         pdf_filename = f"reporte_{report_id}.pdf"
         pdf_path = os.path.join(app.config['REPORTS_FOLDER'], pdf_filename)
-        generar_reporte_pdf(pdf_path)
+        
+        try:
+            pdf_generator = CyberScopePDFGenerator()
+            pdf_generator.generate_comprehensive_report(complete_analysis_data, pdf_path)
+        except Exception as e:
+            logger.error(f"Error generando PDF mejorado: {e}")
+            # Fallback al generador original
+            generar_reporte_pdf(pdf_path)
         
         analysis_status[report_id]['status'] = 'completed'
         analysis_status[report_id]['progress'] = 100
@@ -132,6 +185,7 @@ def analyze_urls_background(urls, report_id, analysis_types):
         analysis_status[report_id]['pdf_file'] = pdf_filename
         analysis_status[report_id]['findings_count'] = len(FINDINGS)
         analysis_status[report_id]['findings'] = FINDINGS.copy()
+        analysis_status[report_id]['chatgpt_analysis'] = chatgpt_analysis
         
     except Exception as e:
         analysis_status[report_id]['status'] = 'error'
@@ -271,17 +325,59 @@ def upload_file():
                 content = f.read()
                 extraer_iocs(content)
         
+        # Análisis con IA para archivos forenses
+        chatgpt_analysis = None
+        try:
+            if OPENAI_API_KEY:
+                chatgpt_analyzer = ChatGPTAnalyzer(OPENAI_API_KEY)
+                target_info = {
+                    'url': f'Archivo: {filename}',
+                    'analysis_types': [analysis_type],
+                    'timestamp': datetime.now().isoformat()
+                }
+                chatgpt_analysis = chatgpt_analyzer.analyze_findings_with_chatgpt(FINDINGS, target_info)
+            else:
+                fallback_analyzer = ChatGPTFallbackAnalyzer()
+                target_info = {
+                    'url': f'Archivo: {filename}',
+                    'analysis_types': [analysis_type],
+                    'timestamp': datetime.now().isoformat()
+                }
+                chatgpt_analysis = fallback_analyzer.analyze_findings_with_rules(FINDINGS, target_info)
+        except Exception as e:
+            logger.error(f"Error en análisis ChatGPT forense: {e}")
+        
         # Generar reporte
         report_id = generate_report_id()
+        
+        # Datos completos del análisis forense
+        complete_analysis_data = {
+            'target_info': {
+                'url': f'Archivo: {filename}',
+                'analysis_types': [analysis_type],
+                'timestamp': datetime.now().isoformat(),
+                'file_type': 'forensic_file'
+            },
+            'findings': FINDINGS.copy(),
+            'chatgpt_analysis': chatgpt_analysis
+        }
         
         # Exportar resultados
         json_filename = f"forensics_{report_id}.json"
         json_path = os.path.join(app.config['REPORTS_FOLDER'], json_filename)
-        exportar_json(json_path)
+        
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(complete_analysis_data, f, indent=2, ensure_ascii=False)
         
         pdf_filename = f"forensics_{report_id}.pdf"
         pdf_path = os.path.join(app.config['REPORTS_FOLDER'], pdf_filename)
-        generar_reporte_pdf(pdf_path)
+        
+        try:
+            pdf_generator = CyberScopePDFGenerator()
+            pdf_generator.generate_comprehensive_report(complete_analysis_data, pdf_path)
+        except Exception as e:
+            logger.error(f"Error generando PDF forense mejorado: {e}")
+            generar_reporte_pdf(pdf_path)
         
         # Limpiar archivo subido
         os.remove(file_path)
@@ -292,6 +388,7 @@ def upload_file():
             'findings': FINDINGS,
             'json_file': json_filename,
             'pdf_file': pdf_filename
+            'chatgpt_analysis': chatgpt_analysis
         })
         
     except Exception as e:
@@ -311,6 +408,7 @@ def reports():
                 'urls_count': status.get('urls_count', 0),
                 'findings_count': status.get('findings_count', 0),
                 'analysis_types': status.get('analysis_types', [])
+                'has_chatgpt_analysis': bool(status.get('chatgpt_analysis'))
             })
     
     return render_template('reports.html', reports=reports)

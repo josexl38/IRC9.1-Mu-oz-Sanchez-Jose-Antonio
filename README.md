@@ -11,6 +11,8 @@ CyberScope ahora incluye una interfaz web moderna desarrollada con Flask que per
 - **Reportes Descargables**: Genera reportes en PDF y JSON
 - **Interfaz Intuitiva**: Moderna y fácil de usar con progreso en tiempo real
 - **Herramientas de Pentesting**: Escaneo de puertos, detección de vulnerabilidades, análisis SSL
+- **🤖 Análisis Inteligente con IA**: Integración con ChatGPT para explicaciones comprensibles
+- **📄 Reportes PDF Mejorados**: Generación automática de reportes profesionales
 
 #### 🚀 Ejecutar con Docker
 
@@ -22,6 +24,21 @@ docker-compose up --build
 # http://localhost:5000
 ```
 
+#### 🔧 Configuración de ChatGPT (Opcional)
+
+Para habilitar el análisis inteligente con ChatGPT, configura tu API key:
+
+```bash
+# Opción 1: Variable de entorno
+export OPENAI_API_KEY="tu-api-key-aqui"
+docker-compose up --build
+
+# Opción 2: Archivo .env
+echo "OPENAI_API_KEY=tu-api-key-aqui" > .env
+docker-compose up --build
+```
+
+**Sin API Key**: CyberScope funcionará con un analizador de respaldo que proporciona análisis básico usando reglas predefinidas.
 #### 📋 Características de la Interfaz Web
 
 **Análisis Web:**
@@ -32,17 +49,24 @@ docker-compose up --build
 - ✅ Información WHOIS
 - ✅ Escaneo de puertos
 - ✅ Progreso en tiempo real con cancelación de análisis
+- ✅ **🤖 Análisis inteligente**: Explicaciones comprensibles de hallazgos técnicos
+- ✅ **📊 Nivel de riesgo**: Evaluación automática del riesgo de seguridad
 
 **Análisis Forense:**
 - ✅ Hash de archivos (MD5, SHA1, SHA256)
 - ✅ Extracción de metadatos EXIF
 - ✅ Metadatos de archivos PDF
 - ✅ Extracción de IoCs de archivos de texto
+- ✅ **🤖 Análisis forense inteligente**: Interpretación automática de hallazgos
 
 **Reportes:**
 - ✅ Generación automática de reportes PDF y JSON
 - ✅ Descarga directa desde la interfaz web
 - ✅ Historial de reportes generados
+- ✅ **📄 Reportes PDF profesionales**: Con análisis técnico y explicaciones simplificadas
+- ✅ **🎯 Resumen ejecutivo**: Análisis comprensible para usuarios no técnicos
+- ✅ **⚠️ Evaluación de riesgos**: Clasificación automática de vulnerabilidades
+- ✅ **💡 Recomendaciones**: Sugerencias específicas de seguridad
 
 ### Instalación
 
@@ -120,6 +144,9 @@ python cyberscope/main.py --ioc log.txt --json --pdf
 - ✅ Análisis de certificados SSL
 - ✅ Fuzzing de parámetros web
 - ✅ Escaneo completo de pentesting
+- ✅ **🤖 Análisis inteligente con IA**: Interpretación automática de hallazgos
+- ✅ **📊 Evaluación de riesgos**: Clasificación automática de vulnerabilidades
+- ✅ **💡 Recomendaciones inteligentes**: Sugerencias específicas de seguridad
 
 ### Interfaz Web:
 
@@ -130,6 +157,9 @@ python cyberscope/main.py --ioc log.txt --json --pdf
 - ✅ Progreso en tiempo real
 - ✅ Cancelación de análisis
 - ✅ Dockerizado para fácil despliegue
+- ✅ **🤖 Integración con ChatGPT**: Análisis inteligente opcional
+- ✅ **📄 Reportes PDF profesionales**: Con análisis técnico y simplificado
+- ✅ **🎯 Dashboard intuitivo**: Interfaz comprensible para usuarios no técnicos
 
 ### Dependencias:
 
@@ -143,7 +173,20 @@ python cyberscope/main.py --ioc log.txt --json --pdf
 - `Flask`: Framework web para la interfaz
 - `Werkzeug`: Utilidades web para Flask
 
+### 🤖 Análisis Inteligente:
+
+CyberScope integra capacidades de IA para hacer los resultados más comprensibles:
+
+- **Análisis automático**: Los hallazgos técnicos se envían automáticamente para análisis
+- **Explicaciones simplificadas**: Convierte jerga técnica en lenguaje comprensible
+- **Evaluación de riesgos**: Clasifica automáticamente el nivel de riesgo (Alto/Medio/Bajo)
+- **Recomendaciones específicas**: Proporciona acciones concretas a tomar
+- **Glosario técnico**: Explica términos especializados encontrados
+- **Análisis de respaldo**: Funciona sin API key usando reglas predefinidas
+
 ### Arquitectura:
 - **Versión modular**: Código organizado en módulos especializados
 - **Interfaz web**: Flask con templates Bootstrap para una experiencia moderna
 - **Dockerizado**: Fácil despliegue con Docker y docker-compose
+- **IA integrada**: Análisis inteligente opcional con ChatGPT
+- **Reportes profesionales**: Generación automática de documentos PDF completos
