@@ -1,6 +1,6 @@
 # IRC9.1-Mu-oz-Sanchez-Jose-Antonio
 
-## CyberScope v2.0 - Herramienta de Análisis Forense Digital
+## CyberScope v2.0 - Herramienta de Análisis Forense Digital y Pentesting
 
 ### 🌐 Interfaz Web con Docker
 
@@ -9,7 +9,8 @@ CyberScope ahora incluye una interfaz web moderna desarrollada con Flask que per
 - **Análisis Web Masivo**: Pega múltiples URLs y analízalas automáticamente
 - **Análisis Forense de Archivos**: Sube archivos para análisis forense
 - **Reportes Descargables**: Genera reportes en PDF y JSON
-- **Interfaz Intuitiva**: Fácil de usar con progreso en tiempo real
+- **Interfaz Intuitiva**: Moderna y fácil de usar con progreso en tiempo real
+- **Herramientas de Pentesting**: Escaneo de puertos, detección de vulnerabilidades, análisis SSL
 
 #### 🚀 Ejecutar con Docker
 
@@ -17,12 +18,9 @@ CyberScope ahora incluye una interfaz web moderna desarrollada con Flask que per
 # Construir y ejecutar con Docker Compose
 docker-compose up --build
 
-# O ejecutar manualmente
-docker build -t cyberscope-web .
-docker run -p 5000:5000 -v $(pwd)/reports:/app/reports cyberscope-web
+# Acceder a la interfaz web
+# http://localhost:5000
 ```
-
-Luego abre tu navegador en: http://localhost:5000
 
 #### 📋 Características de la Interfaz Web
 
@@ -33,12 +31,18 @@ Luego abre tu navegador en: http://localhost:5000
 - ✅ Fuzzing de parámetros web
 - ✅ Información WHOIS
 - ✅ Escaneo de puertos
+- ✅ Progreso en tiempo real con cancelación de análisis
 
 **Análisis Forense:**
 - ✅ Hash de archivos (MD5, SHA1, SHA256)
 - ✅ Extracción de metadatos EXIF
 - ✅ Metadatos de archivos PDF
 - ✅ Extracción de IoCs de archivos de texto
+
+**Reportes:**
+- ✅ Generación automática de reportes PDF y JSON
+- ✅ Descarga directa desde la interfaz web
+- ✅ Historial de reportes generados
 
 ### Instalación
 
@@ -48,7 +52,7 @@ git clone <url-del-repositorio>
 cd IRC9.1-Mu-oz-Sanchez-Jose-Antonio
 ```
 
-2. Crea un entorno virtual (recomendado):
+2. Para uso local, crea un entorno virtual (recomendado):
 ```bash
 python3 -m venv cyberscope-env
 source cyberscope-env/bin/activate  # En Linux/Mac
@@ -63,40 +67,42 @@ pip install -r requirements.txt
 
 ### Uso
 
-#### Versión monolítica:
-```bash
-python cyberscope.py --help
-```
-
-#### Versión modular:
+#### Línea de comandos:
 ```bash
 cd cyberscope
 python main.py --help
+```
+
+#### Interfaz Web:
+```bash
+docker-compose up --build
+# Abrir http://localhost:5000 en el navegador
 ```
 
 ### Ejemplos de uso:
 
 ```bash
 # Hashear un archivo
-python cyberscope.py --hash archivo.txt
+python cyberscope/main.py --hash archivo.txt
 
 # Buscar archivos sospechosos
-python cyberscope.py --buscar /ruta/directorio --pdf
+python cyberscope/main.py --buscar /ruta/directorio --pdf
 
 # Extraer metadatos EXIF
-python cyberscope.py --exif imagen.jpg --json
+python cyberscope/main.py --exif imagen.jpg --json
 
 # Análisis web
-python cyberscope.py --webscan https://ejemplo.com --pdf
+python cyberscope/main.py --webscan https://ejemplo.com --pdf
 
 # Pentesting
-python cyberscope.py --portscan 192.168.1.1 --pdf
-python cyberscope.py --vulnscan https://ejemplo.com --json
-python cyberscope.py --sslcheck ejemplo.com
-python cyberscope.py --paramfuzz https://ejemplo.com/search
+python cyberscope/main.py --portscan 192.168.1.1 --pdf
+python cyberscope/main.py --vulnscan https://ejemplo.com --json
+python cyberscope/main.py --sslcheck ejemplo.com
+python cyberscope/main.py --paramfuzz https://ejemplo.com/search
+python cyberscope/main.py --pentest https://ejemplo.com --pdf --json
 
 # Extraer IoCs de un archivo
-python cyberscope.py --ioc log.txt --json --pdf
+python cyberscope/main.py --ioc log.txt --json --pdf
 ```
 
 ### Características:
@@ -107,13 +113,13 @@ python cyberscope.py --ioc log.txt --json --pdf
 - ✅ Búsqueda de archivos sospechosos
 - ✅ Extracción de IoCs (IPs, URLs, emails, hashes)
 - ✅ Análisis de seguridad web
-- ✅ Fuzzing de directorios
 - ✅ Consultas WHOIS e información de IPs
 - ✅ Generación de reportes en PDF y JSON
 - ✅ Escaneo de puertos TCP
 - ✅ Detección de vulnerabilidades web básicas
 - ✅ Análisis de certificados SSL
 - ✅ Fuzzing de parámetros web
+- ✅ Escaneo completo de pentesting
 
 ### Interfaz Web:
 
@@ -122,6 +128,7 @@ python cyberscope.py --ioc log.txt --json --pdf
 - ✅ Subida de archivos para análisis forense
 - ✅ Reportes descargables (PDF/JSON)
 - ✅ Progreso en tiempo real
+- ✅ Cancelación de análisis
 - ✅ Dockerizado para fácil despliegue
 
 ### Dependencias:
@@ -135,3 +142,8 @@ python cyberscope.py --ioc log.txt --json --pdf
 - `lxml`: Parser XML/HTML adicional
 - `Flask`: Framework web para la interfaz
 - `Werkzeug`: Utilidades web para Flask
+
+### Arquitectura:
+- **Versión modular**: Código organizado en módulos especializados
+- **Interfaz web**: Flask con templates Bootstrap para una experiencia moderna
+- **Dockerizado**: Fácil despliegue con Docker y docker-compose
