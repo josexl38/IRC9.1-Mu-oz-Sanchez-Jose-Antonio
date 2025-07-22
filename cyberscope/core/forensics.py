@@ -4,7 +4,7 @@ import re
 from typing import Dict, List, Optional
 from datetime import datetime
 
-from core.utils import FINDINGS, logger
+from cyberscope.core.utils import FINDINGS, logger
 
 # PIL (EXIF)
 try:
