@@ -387,7 +387,7 @@ def upload_file():
             'findings_count': len(FINDINGS),
             'findings': FINDINGS,
             'json_file': json_filename,
-            'pdf_file': pdf_filename
+            'pdf_file': pdf_filename,
             'chatgpt_analysis': chatgpt_analysis
         })
         
@@ -407,7 +407,7 @@ def reports():
                 'started_at': status.get('started_at'),
                 'urls_count': status.get('urls_count', 0),
                 'findings_count': status.get('findings_count', 0),
-                'analysis_types': status.get('analysis_types', [])
+                'analysis_types': status.get('analysis_types', []),
                 'has_chatgpt_analysis': bool(status.get('chatgpt_analysis'))
             })
     
