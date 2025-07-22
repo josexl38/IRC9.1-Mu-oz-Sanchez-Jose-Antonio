@@ -2,6 +2,44 @@
 
 ## CyberScope v2.0 - Herramienta de Análisis Forense Digital
 
+### 🌐 Interfaz Web con Docker
+
+CyberScope ahora incluye una interfaz web moderna desarrollada con Flask que permite:
+
+- **Análisis Web Masivo**: Pega múltiples URLs y analízalas automáticamente
+- **Análisis Forense de Archivos**: Sube archivos para análisis forense
+- **Reportes Descargables**: Genera reportes en PDF y JSON
+- **Interfaz Intuitiva**: Fácil de usar con progreso en tiempo real
+
+#### 🚀 Ejecutar con Docker
+
+```bash
+# Construir y ejecutar con Docker Compose
+docker-compose up --build
+
+# O ejecutar manualmente
+docker build -t cyberscope-web .
+docker run -p 5000:5000 -v $(pwd)/reports:/app/reports cyberscope-web
+```
+
+Luego abre tu navegador en: http://localhost:5000
+
+#### 📋 Características de la Interfaz Web
+
+**Análisis Web:**
+- ✅ Análisis web básico (headers, contenido, IoCs)
+- ✅ Detección de vulnerabilidades (SQL Injection, XSS, etc.)
+- ✅ Análisis de certificados SSL
+- ✅ Fuzzing de parámetros web
+- ✅ Información WHOIS
+- ✅ Escaneo de puertos
+
+**Análisis Forense:**
+- ✅ Hash de archivos (MD5, SHA1, SHA256)
+- ✅ Extracción de metadatos EXIF
+- ✅ Metadatos de archivos PDF
+- ✅ Extracción de IoCs de archivos de texto
+
 ### Instalación
 
 1. Clona el repositorio:
@@ -77,6 +115,15 @@ python cyberscope.py --ioc log.txt --json --pdf
 - ✅ Análisis de certificados SSL
 - ✅ Fuzzing de parámetros web
 
+### Interfaz Web:
+
+- ✅ Interfaz web moderna con Flask
+- ✅ Análisis masivo de URLs
+- ✅ Subida de archivos para análisis forense
+- ✅ Reportes descargables (PDF/JSON)
+- ✅ Progreso en tiempo real
+- ✅ Dockerizado para fácil despliegue
+
 ### Dependencias:
 
 - `requests`: Para análisis web
@@ -86,3 +133,5 @@ python cyberscope.py --ioc log.txt --json --pdf
 - `reportlab`: Para generación de reportes PDF
 - `ipwhois`: Para consultas de información IP
 - `lxml`: Parser XML/HTML adicional
+- `Flask`: Framework web para la interfaz
+- `Werkzeug`: Utilidades web para Flask
