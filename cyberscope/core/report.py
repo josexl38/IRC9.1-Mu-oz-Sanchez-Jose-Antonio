@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from core.utils import FINDINGS, logger
+from .utils import FINDINGS, logger
 
 # ReportLab para PDF
 try:

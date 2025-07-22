@@ -2,8 +2,8 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
-from core.utils import FINDINGS, logger
-from core.forensics import extraer_iocs
+from .utils import FINDINGS, logger
+from .forensics import extraer_iocs
 
 
 def analizar_pagina_web(url: str, timeout: int = 10) -> bool:

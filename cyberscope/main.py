@@ -4,21 +4,21 @@ import argparse
 import os
 import logging
 
-from core.utils import FINDINGS, logger
-from core.forensics import (
+from .core.utils import FINDINGS, logger
+from .core.forensics import (
     hash_file, hash_directory,
     buscar_sospechosos,
     extraer_exif, extraer_pdf_meta,
     extraer_iocs
 )
-from core.webscan import (
+from .core.webscan import (
     analizar_pagina_web,
     dirscan,
     login_check
 )
-from core.osint import whois_lookup, ip_lookup
-from core.report import exportar_json, generar_reporte_pdf
-from core.pentesting import (
+from .core.osint import whois_lookup, ip_lookup
+from .core.report import exportar_json, generar_reporte_pdf
+from .core.pentesting import (
     escanear_puertos,
     detectar_vulnerabilidades_web,
     analizar_certificado_ssl,

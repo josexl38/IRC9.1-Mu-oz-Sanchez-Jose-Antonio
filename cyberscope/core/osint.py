@@ -1,5 +1,5 @@
 import os
-from core.utils import FINDINGS, logger
+from .utils import FINDINGS, logger
 
 def whois_lookup(domain: str):
     """
