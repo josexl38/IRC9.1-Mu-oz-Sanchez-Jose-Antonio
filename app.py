@@ -405,9 +405,10 @@ def remote():
 def remote_scan():
     try:
         data = request.get_json()
-        hostname = data.get('hostname', '').strip()
-        username = data.get('username', '').strip()
-        key_file = data.get('key_file', '').strip() or None
+        hostname = (data.get('hostname') or '').strip()
+        username = (data.get('username') or '').strip()
+        key_file_raw = data.get('key_file')
+        key_file = key_file_raw.strip() if key_file_raw else None
         port = int(data.get('port', 22))
         scan_type = data.get('scan_type', 'standard')
         

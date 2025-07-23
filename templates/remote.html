@@ -217,11 +217,18 @@ function startRemoteAnalysis(hostname, username, port, keyFile, scanType) {
     // Deshabilitar formulario
     document.getElementById('remoteForm').style.display = 'none';
     
+    // Validar datos antes de enviar
+    if (!hostname || !username) {
+        alert('Hostname y username son requeridos');
+        resetRemoteForm();
+        return;
+    }
+    
     const requestData = {
         hostname: hostname,
         username: username,
         port: parseInt(port),
-        key_file: keyFile || null,
+        key_file: keyFile && keyFile.trim() ? keyFile.trim() : null,
         scan_type: scanType
     };
     

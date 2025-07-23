@@ -62,6 +62,12 @@ class RemoteForensicScanner:
     def execute_remote_command(self, host: str, user: str, command: str, 
                              key_file: Optional[str] = None, port: int = 22) -> Tuple[str, str, int, str]:
         """Ejecuta comando remoto con logging forense"""
+        # Validar parámetros de entrada
+        if not host or not user:
+            error_msg = "Host y usuario son requeridos"
+            FINDINGS.append(f"[SSH_ERROR] {error_msg}")
+            return "", error_msg, 1, f"VALIDATION_ERROR|{error_msg}"
+        
         ssh_cmd = self.build_ssh_command(host, user, command, key_file, port)
         
         start_time = datetime.datetime.now()
@@ -101,6 +107,10 @@ class RemoteForensicScanner:
     def build_ssh_command(self, host: str, user: str, command: str, 
                          key_file: Optional[str] = None, port: int = 22) -> str:
         """Construye comando SSH seguro"""
+        # Validar parámetros
+        if not host or not user or not command:
+            raise ValueError("Host, usuario y comando son requeridos")
+        
         ssh_options = [
             "-o StrictHostKeyChecking=no",
             "-o UserKnownHostsFile=/dev/null",
@@ -109,7 +119,7 @@ class RemoteForensicScanner:
             f"-p {port}"
         ]
         
-        if key_file:
+        if key_file and key_file.strip():
             ssh_options.append(f"-i {key_file}")
             
         ssh_cmd = f"ssh {' '.join(ssh_options)} {user}@{host} '{command}'"
@@ -118,6 +128,13 @@ class RemoteForensicScanner:
     def comprehensive_system_analysis(self, host: str, user: str, 
                                    key_file: Optional[str] = None, port: int = 22) -> Dict:
         """Análisis integral del sistema con evidencia forense"""
+        
+        # Validar parámetros de entrada
+        if not host or not user:
+            error_msg = "Host y usuario son requeridos para el análisis"
+            FINDINGS.append(f"[REMOTE_ERROR] {error_msg}")
+            logger.error(error_msg)
+            return {}
         
         FINDINGS.append(f"[REMOTE_SCAN] Iniciando análisis forense remoto de {host}")
         
