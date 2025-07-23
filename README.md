@@ -160,6 +160,7 @@ python cyberscope/main.py --ioc log.txt --json --pdf
 - ✅ **🤖 Integración con ChatGPT**: Análisis inteligente opcional
 - ✅ **📄 Reportes PDF profesionales**: Con análisis técnico y simplificado
 - ✅ **🎯 Dashboard intuitivo**: Interfaz comprensible para usuarios no técnicos
+- ✅ **🔗 Análisis Remoto SSH**: Análisis forense sin dejar rastros en servidores
 
 ### Dependencias:
 
@@ -172,6 +173,7 @@ python cyberscope/main.py --ioc log.txt --json --pdf
 - `lxml`: Parser XML/HTML adicional
 - `Flask`: Framework web para la interfaz
 - `Werkzeug`: Utilidades web para Flask
+- `PyYAML`: Para archivos de configuración YAML
 
 ### 🤖 Análisis Inteligente:
 
@@ -190,3 +192,24 @@ CyberScope integra capacidades de IA para hacer los resultados más comprensible
 - **Dockerizado**: Fácil despliegue con Docker y docker-compose
 - **IA integrada**: Análisis inteligente opcional con ChatGPT
 - **Reportes profesionales**: Generación automática de documentos PDF completos
+- **Análisis remoto SSH**: Capacidades forenses remotas sin rastros
+
+### 🔗 **Análisis Remoto SSH:**
+
+CyberScope incluye capacidades avanzadas de análisis forense remoto:
+
+- **Sin rastros**: No deja archivos en el servidor objetivo
+- **Análisis integral**: Sistema, usuarios, red, procesos, logs
+- **Evaluación de vulnerabilidades**: SSH, web, bases de datos, escalación de privilegios
+- **Evidencia forense**: Cadena de custodia y hashes de integridad
+- **Múltiples tipos de escaneo**: Rápido, vulnerabilidades, completo
+- **Configuración flexible**: Archivos YAML para personalización
+
+#### **Características del análisis remoto:**
+- ✅ **Conexión SSH segura** con soporte para claves privadas
+- ✅ **Análisis sin rastros** - no crea archivos en el servidor objetivo
+- ✅ **Evidencia forense** con cadena de custodia
+- ✅ **Detección de vulnerabilidades** específicas por categoría
+- ✅ **Análisis de logs** sin descargar archivos completos
+- ✅ **Evaluación de configuraciones** de seguridad
+- ✅ **Integración con IA** para análisis comprensible

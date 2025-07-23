@@ -26,6 +26,8 @@ from cyberscope.core.report import exportar_json, generar_reporte_pdf
 from cyberscope.core.utils import FINDINGS, logger
 from cyberscope.core.chatgpt_analyzer import ChatGPTAnalyzer, ChatGPTFallbackAnalyzer
 from cyberscope.core.pdf_generator import CyberScopePDFGenerator
+from cyberscope.core.remote_scanner import RemoteForensicScanner
+from cyberscope.core.remote_config import RemoteForensicConfig
 
 app = Flask(__name__)
 app.secret_key = 'cyberscope-secret-key-2024'
@@ -394,6 +396,113 @@ def upload_file():
     except Exception as e:
         logger.error(f"Error en análisis forense: {e}")
         return jsonify({'error': f'Error en análisis: {str(e)}'}), 500
+
+@app.route('/remote')
+def remote():
+    return render_template('remote.html')
+
+@app.route('/remote_scan', methods=['POST'])
+def remote_scan():
+    try:
+        data = request.get_json()
+        hostname = data.get('hostname', '').strip()
+        username = data.get('username', '').strip()
+        key_file = data.get('key_file', '').strip() or None
+        port = int(data.get('port', 22))
+        scan_type = data.get('scan_type', 'standard')
+        
+        if not hostname or not username:
+            return jsonify({'error': 'Hostname y username son requeridos'}), 400
+        
+        clear_findings()
+        
+        # Inicializar scanner remoto
+        config = RemoteForensicConfig().config
+        scanner = RemoteForensicScanner(config)
+        
+        # Probar conexión SSH
+        if not scanner.test_ssh_connection(hostname, username, key_file, port):
+            return jsonify({'error': 'No se pudo establecer conexión SSH'}), 400
+        
+        # Ejecutar análisis según el tipo
+        if scan_type == 'quick':
+            evidence = scanner.quick_scan(hostname, username, key_file, port)
+            vulnerabilities = {}
+        elif scan_type == 'vulnerability':
+            evidence = {}
+            vulnerabilities = scanner.vulnerability_assessment(hostname, username, key_file, port)
+        else:  # comprehensive
+            evidence = scanner.comprehensive_system_analysis(hostname, username, key_file, port)
+            vulnerabilities = scanner.vulnerability_assessment(hostname, username, key_file, port)
+        
+        # Análisis con IA
+        chatgpt_analysis = None
+        try:
+            if OPENAI_API_KEY:
+                chatgpt_analyzer = ChatGPTAnalyzer(OPENAI_API_KEY)
+                target_info = {
+                    'url': f'SSH://{hostname}:{port}',
+                    'analysis_types': [scan_type],
+                    'timestamp': datetime.now().isoformat()
+                }
+                chatgpt_analysis = chatgpt_analyzer.analyze_findings_with_chatgpt(FINDINGS, target_info)
+            else:
+                fallback_analyzer = ChatGPTFallbackAnalyzer()
+                target_info = {
+                    'url': f'SSH://{hostname}:{port}',
+                    'analysis_types': [scan_type],
+                    'timestamp': datetime.now().isoformat()
+                }
+                chatgpt_analysis = fallback_analyzer.analyze_findings_with_rules(FINDINGS, target_info)
+        except Exception as e:
+            logger.error(f"Error en análisis ChatGPT remoto: {e}")
+        
+        # Generar reporte
+        report_id = generate_report_id()
+        
+        complete_analysis_data = {
+            'target_info': {
+                'url': f'SSH://{hostname}:{port}',
+                'analysis_types': [scan_type],
+                'timestamp': datetime.now().isoformat(),
+                'scan_type': 'remote_ssh'
+            },
+            'findings': FINDINGS.copy(),
+            'evidence': evidence,
+            'vulnerabilities': vulnerabilities,
+            'chatgpt_analysis': chatgpt_analysis
+        }
+        
+        # Exportar resultados
+        json_filename = f"remote_scan_{report_id}.json"
+        json_path = os.path.join(app.config['REPORTS_FOLDER'], json_filename)
+        
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(complete_analysis_data, f, indent=2, ensure_ascii=False)
+        
+        pdf_filename = f"remote_scan_{report_id}.pdf"
+        pdf_path = os.path.join(app.config['REPORTS_FOLDER'], pdf_filename)
+        
+        try:
+            pdf_generator = CyberScopePDFGenerator()
+            pdf_generator.generate_comprehensive_report(complete_analysis_data, pdf_path)
+        except Exception as e:
+            logger.error(f"Error generando PDF remoto: {e}")
+        
+        return jsonify({
+            'report_id': report_id,
+            'findings_count': len(FINDINGS),
+            'findings': FINDINGS,
+            'evidence_count': len(evidence),
+            'vulnerabilities_count': sum(len(v.get('vulnerabilities_found', [])) for v in vulnerabilities.values()),
+            'json_file': json_filename,
+            'pdf_file': pdf_filename,
+            'chatgpt_analysis': chatgpt_analysis
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en análisis remoto: {e}")
+        return jsonify({'error': f'Error en análisis remoto: {str(e)}'}), 500
 
 @app.route('/reports')
 def reports():
