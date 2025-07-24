@@ -412,74 +412,130 @@ def remote_scan():
         port = int(data.get('port', 22))
         scan_type = data.get('scan_type', 'standard')
         
+        # Validación más robusta de parámetros
         if not hostname or not username:
             return jsonify({'error': 'Hostname y username son requeridos'}), 400
         
+        if port < 1 or port > 65535:
+            return jsonify({'error': 'Puerto debe estar entre 1 y 65535'}), 400
+        
+        # Validar tipos de escaneo
+        valid_scan_types = ['quick', 'standard', 'comprehensive', 'vulnerability']
+        if scan_type not in valid_scan_types:
+            return jsonify({'error': f'Tipo de escaneo debe ser uno de: {", ".join(valid_scan_types)}'}), 400
+        
         clear_findings()
         
-        # Inicializar scanner remoto
-        config = RemoteForensicConfig().config
+        # Inicializar configuración corregida
+        try:
+            config = RemoteForensicConfig().config
+        except Exception as e:
+            logger.error(f"Error cargando configuración: {e}")
+            # Usar configuración por defecto si falla
+            config = {
+                'ssh_timeout': 30,
+                'max_concurrent': 3,
+                'evidence_dir': './forensic_evidence'
+            }
+        
+        # Inicializar scanner remoto con configuración validada
         scanner = RemoteForensicScanner(config)
         
-        # Probar conexión SSH
+        # Log del intento de conexión
+        logger.info(f"Iniciando análisis remoto: {hostname}:{port} como {username} (tipo: {scan_type})")
+        FINDINGS.append(f"[REMOTE_INIT] Iniciando análisis {scan_type} de {hostname}:{port}")
+        
+        # Probar conexión SSH primero
         if not scanner.test_ssh_connection(hostname, username, key_file, port):
-            return jsonify({'error': 'No se pudo establecer conexión SSH'}), 400
+            error_msg = f"No se pudo establecer conexión SSH con {hostname}:{port}"
+            logger.error(error_msg)
+            return jsonify({'error': error_msg}), 400
         
         # Ejecutar análisis según el tipo
-        if scan_type == 'quick':
-            evidence = scanner.quick_scan(hostname, username, key_file, port)
-            vulnerabilities = {}
-        elif scan_type == 'vulnerability':
-            evidence = {}
-            vulnerabilities = scanner.vulnerability_assessment(hostname, username, key_file, port)
-        else:  # comprehensive
-            evidence = scanner.comprehensive_system_analysis(hostname, username, key_file, port)
-            vulnerabilities = scanner.vulnerability_assessment(hostname, username, key_file, port)
+        evidence = {}
+        vulnerabilities = {}
+        
+        try:
+            if scan_type == 'quick':
+                evidence = scanner.quick_scan(hostname, username, key_file, port)
+                vulnerabilities = {}
+                logger.info(f"Escaneo rápido completado para {hostname}")
+                
+            elif scan_type == 'vulnerability':
+                evidence = {}
+                vulnerabilities = scanner.vulnerability_assessment(hostname, username, key_file, port)
+                logger.info(f"Evaluación de vulnerabilidades completada para {hostname}")
+                
+            elif scan_type == 'comprehensive':
+                evidence = scanner.comprehensive_system_analysis(hostname, username, key_file, port)
+                vulnerabilities = scanner.vulnerability_assessment(hostname, username, key_file, port)
+                logger.info(f"Análisis comprehensivo completado para {hostname}")
+                
+            else:  # standard
+                evidence = scanner.comprehensive_system_analysis(hostname, username, key_file, port)
+                vulnerabilities = {}
+                logger.info(f"Análisis estándar completado para {hostname}")
+                
+        except Exception as e:
+            error_msg = f"Error durante el análisis remoto: {str(e)}"
+            logger.error(error_msg)
+            FINDINGS.append(f"[REMOTE_ERROR] {error_msg}")
+            return jsonify({'error': error_msg}), 500
         
         # Análisis con IA
         chatgpt_analysis = None
         try:
-            if OPENAI_API_KEY:
-                chatgpt_analyzer = ChatGPTAnalyzer(OPENAI_API_KEY)
-                target_info = {
-                    'url': f'SSH://{hostname}:{port}',
-                    'analysis_types': [scan_type],
-                    'timestamp': datetime.now().isoformat()
-                }
-                chatgpt_analysis = chatgpt_analyzer.analyze_findings_with_chatgpt(FINDINGS, target_info)
-            else:
-                fallback_analyzer = ChatGPTFallbackAnalyzer()
-                target_info = {
-                    'url': f'SSH://{hostname}:{port}',
-                    'analysis_types': [scan_type],
-                    'timestamp': datetime.now().isoformat()
-                }
-                chatgpt_analysis = fallback_analyzer.analyze_findings_with_rules(FINDINGS, target_info)
-        except Exception as e:
-            logger.error(f"Error en análisis ChatGPT remoto: {e}")
-        
-        # Generar reporte
-        report_id = generate_report_id()
-        
-        complete_analysis_data = {
-            'target_info': {
+            target_info = {
                 'url': f'SSH://{hostname}:{port}',
                 'analysis_types': [scan_type],
                 'timestamp': datetime.now().isoformat(),
                 'scan_type': 'remote_ssh'
-            },
+            }
+            
+            if OPENAI_API_KEY:
+                chatgpt_analyzer = ChatGPTAnalyzer(OPENAI_API_KEY)
+                chatgpt_analysis = chatgpt_analyzer.analyze_findings_with_chatgpt(FINDINGS, target_info)
+            else:
+                fallback_analyzer = ChatGPTFallbackAnalyzer()
+                chatgpt_analysis = fallback_analyzer.analyze_findings_with_rules(FINDINGS, target_info)
+                
+        except Exception as e:
+            logger.error(f"Error en análisis ChatGPT remoto: {e}")
+            FINDINGS.append(f"[CHATGPT_ERROR] Error en análisis IA: {str(e)}")
+        
+        # Generar reporte
+        report_id = generate_report_id()
+        
+        # Calcular estadísticas
+        evidence_count = len(evidence)
+        vuln_count = 0
+        for vuln_data in vulnerabilities.values():
+            vuln_count += len(vuln_data.get('vulnerabilities_found', []))
+        
+        complete_analysis_data = {
+            'target_info': target_info,
             'findings': FINDINGS.copy(),
             'evidence': evidence,
             'vulnerabilities': vulnerabilities,
-            'chatgpt_analysis': chatgpt_analysis
+            'chatgpt_analysis': chatgpt_analysis,
+            'scanner_session': scanner.session_id,
+            'statistics': {
+                'evidence_items': evidence_count,
+                'vulnerabilities_found': vuln_count,
+                'scan_type': scan_type,
+                'target': f"{hostname}:{port}"
+            }
         }
         
         # Exportar resultados
         json_filename = f"remote_scan_{report_id}.json"
         json_path = os.path.join(app.config['REPORTS_FOLDER'], json_filename)
         
-        with open(json_path, 'w', encoding='utf-8') as f:
-            json.dump(complete_analysis_data, f, indent=2, ensure_ascii=False)
+        try:
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(complete_analysis_data, f, indent=2, ensure_ascii=False, default=str)
+        except Exception as e:
+            logger.error(f"Error guardando JSON: {e}")
         
         pdf_filename = f"remote_scan_{report_id}.pdf"
         pdf_path = os.path.join(app.config['REPORTS_FOLDER'], pdf_filename)
@@ -489,21 +545,48 @@ def remote_scan():
             pdf_generator.generate_comprehensive_report(complete_analysis_data, pdf_path)
         except Exception as e:
             logger.error(f"Error generando PDF remoto: {e}")
+            FINDINGS.append(f"[PDF_ERROR] Error generando PDF: {str(e)}")
         
-        return jsonify({
+        # Exportar cadena de evidencia forense
+        try:
+            evidence_chain_file = scanner.export_evidence_chain(
+                os.path.join(app.config['REPORTS_FOLDER'], f"evidence_chain_{report_id}.json")
+            )
+        except Exception as e:
+            logger.error(f"Error exportando cadena de evidencia: {e}")
+            evidence_chain_file = None
+        
+        # Respuesta de éxito
+        response_data = {
             'report_id': report_id,
             'findings_count': len(FINDINGS),
             'findings': FINDINGS,
-            'evidence_count': len(evidence),
-            'vulnerabilities_count': sum(len(v.get('vulnerabilities_found', [])) for v in vulnerabilities.values()),
+            'evidence_count': evidence_count,
+            'vulnerabilities_count': vuln_count,
             'json_file': json_filename,
             'pdf_file': pdf_filename,
-            'chatgpt_analysis': chatgpt_analysis
-        })
+            'chatgpt_analysis': chatgpt_analysis,
+            'scan_type': scan_type,
+            'target': f"{hostname}:{port}",
+            'scanner_session': scanner.session_id
+        }
         
+        if evidence_chain_file:
+            response_data['evidence_chain_file'] = os.path.basename(evidence_chain_file)
+        
+        logger.info(f"Análisis remoto completado exitosamente: {hostname}:{port}")
+        return jsonify(response_data)
+        
+    except ValueError as e:
+        error_msg = f"Error de validación: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({'error': error_msg}), 400
     except Exception as e:
-        logger.error(f"Error en análisis remoto: {e}")
-        return jsonify({'error': f'Error en análisis remoto: {str(e)}'}), 500
+        error_msg = f"Error inesperado en análisis remoto: {str(e)}"
+        logger.error(error_msg)
+        FINDINGS.append(f"[REMOTE_CRITICAL_ERROR] {error_msg}")
+        return jsonify({'error': error_msg}), 500
+
 
 @app.route('/reports')
 def reports():
