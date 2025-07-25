@@ -57,4 +57,4 @@ ENV PYTHONPATH=/app
 ENV SSH_AUTH_SOCK=/tmp/ssh_auth_sock
 
 # Comando de inicio
-CMD ["Python", "app.py"]
+CMD ["python3", "app.py"]
