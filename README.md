@@ -18,7 +18,7 @@ CyberScope ahora incluye una interfaz web moderna desarrollada con Flask que per
 
 ```bash
 # Construir y ejecutar con Docker Compose
-docker-compose up --build
+docker compose up --build -d
 
 # Acceder a la interfaz web
 # http://localhost:5000
