@@ -79,15 +79,14 @@ class CyberScopePDFGenerator:
         self.styles.add(ParagraphStyle(
             name='ChatGPTAnalysis',
             parent=self.styles['Normal'],
-            fontSize=10,
+            fontSize=11,
             spaceAfter=10,
             spaceBefore=10,
             alignment=TA_JUSTIFY,
             leftIndent=10,
             rightIndent=10,
             fontName='Helvetica',
-            backColor=colors.HexColor('#f7fafc'),
-            wordWrap='LTR'
+            backColor=colors.HexColor('#f7fafc')
         ))
         
         # Estilo para recomendaciones
@@ -376,97 +375,7 @@ class CyberScopePDFGenerator:
         # Texto simplificado
         if ai_analysis.get('simplified_text'):
             elements.append(Paragraph("Explicación Simplificada:", self.styles['SectionTitle']))
-            
-            # Procesar texto de manera más robusta
-            simplified_text = ai_analysis['simplified_text']
-            
-            # Función para limpiar texto
-            def clean_text_for_pdf(text):
-                if not text:
-                    return ""
-                
-                # Reemplazar saltos de línea
-                text = text.replace('\n\n', ' PARAGRAPH_BREAK ')
-                text = text.replace('\n', ' ')
-                
-                # Limpiar caracteres especiales problemáticos
-                replacements = {
-                    'ñ': 'n', 'Ñ': 'N',
-                    'á': 'a', 'Á': 'A',
-                    'é': 'e', 'É': 'E', 
-                    'í': 'i', 'Í': 'I',
-                    'ó': 'o', 'Ó': 'O',
-                    'ú': 'u', 'Ú': 'U',
-                    'ü': 'u', 'Ü': 'U'
-                }
-                
-                for old, new in replacements.items():
-                    text = text.replace(old, new)
-                
-                return text
-            
-            # Limpiar el texto
-            cleaned_text = clean_text_for_pdf(simplified_text)
-            
-            # Dividir en párrafos
-            paragraphs = cleaned_text.split(' PARAGRAPH_BREAK ')
-            
-            for paragraph in paragraphs:
-                paragraph = paragraph.strip()
-                if paragraph and len(paragraph) > 10:
-                    # Dividir párrafos muy largos
-                    if len(paragraph) > 800:
-                        # Dividir por oraciones
-                        sentences = paragraph.split('. ')
-                        current_chunk = ""
-                        
-                        for sentence in sentences:
-                            if len(current_chunk + sentence) < 800:
-                                current_chunk += sentence + ". "
-                            else:
-                                if current_chunk:
-                                    elements.append(Paragraph(current_chunk.strip(), self.styles['ChatGPTAnalysis']))
-                                    elements.append(Spacer(1, 0.1*inch))
-                                current_chunk = sentence + ". "
-                        
-                        if current_chunk:
-                            elements.append(Paragraph(current_chunk.strip(), self.styles['ChatGPTAnalysis']))
-                            elements.append(Spacer(1, 0.1*inch))
-                    else:
-                        elements.append(Paragraph(paragraph, self.styles['ChatGPTAnalysis']))
-                        elements.append(Spacer(1, 0.1*inch))
-        
-        # Vulnerabilidades identificadas
-        if ai_analysis.get('vulnerabilities'):
-            elements.append(Paragraph("Vulnerabilidades Identificadas:", self.styles['SectionTitle']))
-            for vuln in ai_analysis['vulnerabilities']:
-                clean_vuln = vuln.replace('ñ', 'n').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
-                elements.append(Paragraph(f"• {clean_vuln}", self.styles['CriticalFinding']))
-            elements.append(Spacer(1, 0.2*inch))
-        
-        # Recomendaciones
-        if ai_analysis.get('recommendations'):
-            elements.append(Paragraph("Recomendaciones:", self.styles['SectionTitle']))
-            for rec in ai_analysis['recommendations']:
-                clean_rec = rec.replace('ñ', 'n').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
-                elements.append(Paragraph(f"• {clean_rec}", self.styles['Recommendation']))
-            elements.append(Spacer(1, 0.2*inch))
-        
-        # Términos técnicos explicados
-        if ai_analysis.get('technical_terms'):
-            elements.append(Paragraph("Glosario de Terminos Tecnicos:", self.styles['SectionTitle']))
-            for term in ai_analysis['technical_terms']:
-                clean_term = term.replace('ñ', 'n').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
-                elements.append(Paragraph(f"• {clean_term}", self.styles['NormalFinding']))
-        
-        return elements
-                for paragraph in paragraphs:
-                    if paragraph.strip():
-                        elements.append(Paragraph(paragraph.strip(), self.styles['ChatGPTAnalysis']))
-                        elements.append(Spacer(1, 0.1*inch))
-            else:
-                elements.append(Paragraph(simplified_text, self.styles['ChatGPTAnalysis']))
-            
+            elements.append(Paragraph(simplified_text, self.styles['ChatGPTAnalysis']))
             elements.append(Spacer(1, 0.2*inch))
         
         # Vulnerabilidades identificadas
