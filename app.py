@@ -79,6 +79,8 @@ def analyze_urls_background(urls, report_id, analysis_types):
         clear_findings()
         
         total_urls = len(urls)
+        total_steps = total_urls * len(analysis_types) + 2  # URLs * tipos + IA + reportes
+        current_step = 0
         
         for i, url in enumerate(urls):
             if analysis_status[report_id]['status'] == 'cancelled':
@@ -89,54 +91,55 @@ def analyze_urls_background(urls, report_id, analysis_types):
                 continue
                 
             analysis_status[report_id]['current_url'] = url
-            analysis_status[report_id]['progress'] = int((i / total_urls) * 80)  # 80% para escaneo
             
-            # Análisis web básico
-            if 'webscan' in analysis_types:
-                analizar_pagina_web(url)
+            # Progreso por tipo de análisis
+            for analysis_type in analysis_types:
+                if analysis_status[report_id]['status'] == 'cancelled':
+                    break
+                
+                current_step += 1
+                progress = int((current_step / total_steps) * 85)  # 85% para análisis
+                analysis_status[report_id]['progress'] = progress
+                analysis_status[report_id]['current_url'] = f"{url} - {analysis_type}"
+                
+                # Ejecutar análisis específico
+                if analysis_type == 'webscan':
+                    analizar_pagina_web(url)
+                elif analysis_type == 'vulnscan':
+                    detectar_vulnerabilidades_web(url)
+                elif analysis_type == 'sslcheck':
+                    try:
+                        from urllib.parse import urlparse
+                        parsed = urlparse(url)
+                        if parsed.scheme == 'https':
+                            analizar_certificado_ssl(parsed.hostname)
+                    except:
+                        pass
+                elif analysis_type == 'paramfuzz':
+                    fuzzing_parametros_web(url)
+                elif analysis_type == 'whois':
+                    try:
+                        from urllib.parse import urlparse
+                        parsed = urlparse(url)
+                        if parsed.hostname:
+                            whois_lookup(parsed.hostname)
+                    except:
+                        pass
+                elif analysis_type == 'portscan':
+                    try:
+                        from urllib.parse import urlparse
+                        parsed = urlparse(url)
+                        if parsed.hostname:
+                            escanear_puertos(parsed.hostname)
+                    except:
+                        pass
+                
+                time.sleep(0.5)  # Pausa entre análisis
             
-            # Detección de vulnerabilidades
-            if 'vulnscan' in analysis_types:
-                detectar_vulnerabilidades_web(url)
-            
-            # Análisis SSL
-            if 'sslcheck' in analysis_types:
-                try:
-                    from urllib.parse import urlparse
-                    parsed = urlparse(url)
-                    if parsed.scheme == 'https':
-                        analizar_certificado_ssl(parsed.hostname)
-                except:
-                    pass
-            
-            # Fuzzing de parámetros
-            if 'paramfuzz' in analysis_types:
-                fuzzing_parametros_web(url)
-            
-            # WHOIS lookup
-            if 'whois' in analysis_types:
-                try:
-                    from urllib.parse import urlparse
-                    parsed = urlparse(url)
-                    if parsed.hostname:
-                        whois_lookup(parsed.hostname)
-                except:
-                    pass
-            
-            # Escaneo de puertos
-            if 'portscan' in analysis_types:
-                try:
-                    from urllib.parse import urlparse
-                    parsed = urlparse(url)
-                    if parsed.hostname:
-                        escanear_puertos(parsed.hostname)
-                except:
-                    pass
-            
-            time.sleep(1)  # Pausa entre URLs
+        current_step += 1
         
         # Análisis con IA (Groq o Fallback)
-        analysis_status[report_id]['progress'] = 85
+        analysis_status[report_id]['progress'] = int((current_step / total_steps) * 90)
         analysis_status[report_id]['current_url'] = 'Analizando con IA...'
         
         ai_analysis = None
@@ -158,8 +161,10 @@ def analyze_urls_background(urls, report_id, analysis_types):
             logger.error(f"❌ Error en análisis IA: {e}")
             FINDINGS.append(f"[AI_ERROR] Error en análisis IA: {str(e)}")
 
+        current_step += 1
+        
         # Generar reportes
-        analysis_status[report_id]['progress'] = 90
+        analysis_status[report_id]['progress'] = int((current_step / total_steps) * 95)
         analysis_status[report_id]['current_url'] = 'Generando reportes...'
         
         # Preparar datos completos para el reporte

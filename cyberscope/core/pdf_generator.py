@@ -505,3 +505,42 @@ class CyberScopePDFGenerator:
             'Bajo': colors.HexColor('#38a169')
         }
         return colors_map.get(risk_level, colors.HexColor('#718096'))
+
+    def clean_text_for_pdf(self, text):
+        """Limpia texto para PDF eliminando caracteres problemáticos"""
+        if not text:
+            return ""
+        
+        # Limpiar emojis y caracteres especiales problemáticos
+        cleaned = text.replace('nn', '• ')  # Reemplazar nn con bullets
+        cleaned = re.sub(r'[^\x00-\x7F]+', '• ', cleaned)  # Reemplazar emojis con bullets
+        cleaned = cleaned.replace('\r\n', '\n').replace('\r', '\n')
+        
+        # Escapar caracteres especiales de ReportLab
+        cleaned = cleaned.replace('&', '&amp;')
+        cleaned = cleaned.replace('<', '&lt;')
+        cleaned = cleaned.replace('>', '&gt;')
+        
+        return cleaned
+    
+    def split_long_text(self, text, max_length=600):
+        """Divide texto largo en párrafos más pequeños"""
+        if len(text) <= max_length:
+            return [text]
+        
+        paragraphs = []
+        sentences = text.split('. ')
+        current_paragraph = ""
+        
+        for sentence in sentences:
+            if len(current_paragraph + sentence) <= max_length:
+                current_paragraph += sentence + ". "
+            else:
+                if current_paragraph:
+                    paragraphs.append(current_paragraph.strip())
+                current_paragraph = sentence + ". "
+        
+        if current_paragraph:
+            paragraphs.append(current_paragraph.strip())
+        
+        return paragraphs

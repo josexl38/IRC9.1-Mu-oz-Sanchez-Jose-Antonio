@@ -96,49 +96,27 @@ INFORMACIÓN DEL OBJETIVO:
 """
         
         # Hallazgos técnicos (limitar para no exceder tokens)
-        findings_text = "\n".join([f"- {finding}" for finding in findings_list[:30]])  # Reducir para evitar límites
+        findings_text = "\n".join([f"- {finding}" for finding in findings_list[:15]])  # Reducir más para evitar límites
         
         # Si hay muchos hallazgos, agregar resumen
-        if len(findings_list) > 30:
-            findings_text += f"\n... y {len(findings_list) - 30} hallazgos adicionales"
+        if len(findings_list) > 15:
+            findings_text += f"\n... y {len(findings_list) - 15} hallazgos adicionales"
         
         prompt = f"""
-Eres un experto en ciberseguridad y análisis forense digital. Analiza los siguientes hallazgos técnicos y proporciona una explicación clara y comprensible para usuarios no técnicos.
+Analiza los siguientes hallazgos de seguridad y proporciona:
 
 {target_section}
 
-HALLAZGOS TÉCNICOS ENCONTRADOS:
+HALLAZGOS:
 {findings_text}
 
-Por favor, proporciona un análisis estructurado que incluya:
+Proporciona:
+1. RESUMEN EJECUTIVO (2 líneas)
+2. NIVEL DE RIESGO: Alto/Medio/Bajo
+3. VULNERABILIDADES PRINCIPALES (máximo 3)
+4. RECOMENDACIONES (máximo 3)
 
-1. RESUMEN EJECUTIVO (2-3 líneas): Explicación simple de qué se encontró y su importancia
-
-2. NIVEL DE RIESGO: Evalúa como Alto/Medio/Bajo con justificación clara
-
-3. HALLAZGOS PRINCIPALES: Los 5 hallazgos más críticos explicados en lenguaje simple:
-   - ¿Qué significa cada hallazgo?
-   - ¿Por qué es importante?
-   - ¿Qué riesgo representa?
-
-4. VULNERABILIDADES IDENTIFICADAS: Problemas de seguridad específicos encontrados:
-   - Descripción del problema
-   - Impacto potencial
-   - Urgencia de corrección
-
-5. RECOMENDACIONES ESPECÍFICAS: Acciones concretas y priorizadas:
-   - Qué hacer primero (urgente)
-   - Qué hacer después (importante)
-   - Medidas preventivas
-
-6. GLOSARIO TÉCNICO: Explicación de términos técnicos mencionados
-
-IMPORTANTE: 
-- Usa un lenguaje claro y accesible
-- Evita jerga técnica innecesaria
-- Si usas términos técnicos, explícalos inmediatamente
-- Se específico en las recomendaciones
-- Prioriza por nivel de riesgo
+Responde de forma concisa en español.
 """
         
         return prompt

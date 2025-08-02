@@ -160,64 +160,49 @@ class RemoteForensicScanner:
     def _get_quick_analysis_prompt(self, evidence: str) -> str:
         """Prompt para análisis rápido"""
         return f"""
-Analiza la siguiente evidencia forense de un escaneo rápido y proporciona:
+Analiza esta evidencia forense y proporciona:
 
-1. RESUMEN EJECUTIVO (3-4 líneas)
-2. HALLAZGOS PRINCIPALES (máximo 5 puntos)
-3. NIVEL DE RIESGO: [Crítico/Alto/Medio/Bajo/Informativo]
-4. ACCIONES INMEDIATAS RECOMENDADAS (máximo 3)
+1. RESUMEN (2 líneas)
+2. NIVEL DE RIESGO: Alto/Medio/Bajo
+3. HALLAZGOS PRINCIPALES (máximo 3)
+4. RECOMENDACIONES (máximo 3)
 
-EVIDENCIA FORENSE:
+EVIDENCIA:
 {evidence}
 
-Responde en español, de forma concisa y profesional. Enfócate en los hallazgos más importantes para la seguridad.
+Responde de forma concisa en español.
 """
     
     def _get_comprehensive_analysis_prompt(self, evidence: str) -> str:
         """Prompt para análisis comprehensivo"""
         return f"""
-Realiza un análisis forense digital completo de la siguiente evidencia y proporciona:
+Analiza esta evidencia forense y proporciona:
 
-1. RESUMEN EJECUTIVO
-2. ANÁLISIS POR CATEGORÍAS:
-   - Identificación del Sistema
-   - Actividad de Usuarios
-   - Procesos y Servicios
-   - Configuración de Red
-   - Sistema de Archivos
-   - Configuración de Seguridad
+1. RESUMEN EJECUTIVO (3 líneas)
+2. NIVEL DE RIESGO: Alto/Medio/Bajo
+3. HALLAZGOS CRÍTICOS (máximo 5)
+4. RECOMENDACIONES (máximo 5)
 
-3. HALLAZGOS DE SEGURIDAD CRÍTICOS
-4. INDICADORES DE COMPROMISO (IoCs)
-5. RECOMENDACIONES FORENSES ESPECÍFICAS
-6. NIVEL DE RIESGO GENERAL
-
-EVIDENCIA FORENSE:
+EVIDENCIA:
 {evidence}
 
-Proporciona un análisis detallado y profesional en español, como lo haría un experto forense digital.
+Responde de forma profesional y concisa en español.
 """
     
     def _get_vulnerability_analysis_prompt(self, evidence: str) -> str:
         """Prompt para análisis de vulnerabilidades"""
         return f"""
-Analiza las siguientes vulnerabilidades encontradas en el sistema y proporciona:
+Analiza estas vulnerabilidades y proporciona:
 
-1. RESUMEN DE VULNERABILIDADES
-2. CLASIFICACIÓN POR CRITICIDAD:
-   - CRÍTICAS (Explotación inmediata)
-   - ALTAS (Requieren atención urgente)
-   - MEDIAS (Deben ser corregidas)
-   - BAJAS (Buenas prácticas)
+1. RESUMEN (2 líneas)
+2. NIVEL DE RIESGO: Alto/Medio/Bajo
+3. VULNERABILIDADES CRÍTICAS (máximo 3)
+4. PLAN DE REMEDIACIÓN (máximo 3 acciones)
 
-3. VECTORES DE ATAQUE POTENCIALES
-4. PLAN DE REMEDIACIÓN PRIORIZADO
-5. MEDIDAS DE MITIGACIÓN INMEDIATAS
-
-EVIDENCIA DE VULNERABILIDADES:
+VULNERABILIDADES:
 {evidence}
 
-Responde como un consultor senior en ciberseguridad, en español, con recomendaciones específicas y actionables.
+Responde de forma concisa en español.
 """
 
     # === TU CÓDIGO ORIGINAL CON MEJORAS ===
