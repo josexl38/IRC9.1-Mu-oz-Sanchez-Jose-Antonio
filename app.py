@@ -422,11 +422,22 @@ def upload_file():
             logger.info(f"📄 PDF forense generado: {pdf_filename}")
         except Exception as e:
             logger.error(f"❌ Error generando PDF forense: {e}")
+            logger.error(f"Detalles del error: {str(e)}")
             try:
                 generar_reporte_pdf(pdf_path)
                 logger.info(f"📄 PDF forense generado con fallback: {pdf_filename}")
             except Exception as e2:
                 logger.error(f"❌ Error en PDF forense fallback: {e2}")
+                # Crear PDF básico como último recurso
+                try:
+                    with open(pdf_path.replace('.pdf', '_basic.txt'), 'w', encoding='utf-8') as f:
+                        f.write("REPORTE FORENSE BASICO\n")
+                        f.write("="*50 + "\n\n")
+                        for finding in FINDINGS:
+                            f.write(f"{finding}\n")
+                    logger.info(f"📄 Reporte básico generado como fallback")
+                except Exception as e3:
+                    logger.error(f"❌ Error crítico generando reporte: {e3}")
         
         # Registrar el reporte en analysis_status para permitir descarga
         analysis_status[report_id] = {

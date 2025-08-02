@@ -79,14 +79,15 @@ class CyberScopePDFGenerator:
         self.styles.add(ParagraphStyle(
             name='ChatGPTAnalysis',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             spaceAfter=10,
             spaceBefore=10,
             alignment=TA_JUSTIFY,
             leftIndent=10,
             rightIndent=10,
             fontName='Helvetica',
-            backColor=colors.HexColor('#f7fafc')
+            backColor=colors.HexColor('#f7fafc'),
+            wordWrap='LTR'
         ))
         
         # Estilo para recomendaciones
@@ -504,68 +505,3 @@ class CyberScopePDFGenerator:
             'Bajo': colors.HexColor('#38a169')
         }
         return colors_map.get(risk_level, colors.HexColor('#718096'))
-
-    def clean_text_for_pdf(self, text):
-        """Limpia texto para PDF eliminando caracteres problemáticos"""
-        if not text:
-            return ""
-        
-        # Reemplazar caracteres problemáticos - MEJORADO
-        replacements = {
-            # Caracteres especiales españoles
-            'ñ': 'n', 'Ñ': 'N',
-            'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
-            'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U',
-            'ü': 'u', 'Ü': 'U', 'ç': 'c', 'Ç': 'C',
-            
-            # Signos de puntuación problemáticos
-            '¿': '', '¡': '', '«': '"', '»': '"',
-            ''': "'", ''': "'", '"': '"', '"': '"',
-            '–': '-', '—': '-', '…': '...',
-            
-            # Emojis y símbolos Unicode
-            '•': '•', '✓': '•', '⚠️': '!', '📚': '•', '🤖': '',
-            '🔍': '', '📄': '', '🎯': '', '💡': '', '🛡️': '',
-            '\u2022': '•', '\u2713': '•', '\u26A0': '!',
-            '\u2192': '->', '\u2190': '<-',
-            
-            # Espacios y saltos de línea problemáticos
-            '\u00A0': ' ',  # Non-breaking space
-            '\u2009': ' ',  # Thin space
-            '\u200B': '',   # Zero-width space
-            '\r\n': '\n', '\r': '\n',
-            '\n\n\n\n': '\n\n', '\n\n\n': '\n\n'
-        }
-        
-        cleaned_text = text
-        for old, new in replacements.items():
-            cleaned_text = cleaned_text.replace(old, new)
-        
-        # Limpiar espacios múltiples
-        import re
-        cleaned_text = re.sub(r' +', ' ', cleaned_text)
-        cleaned_text = re.sub(r'\n +', '\n', cleaned_text)
-        
-        return cleaned_text.strip()
-
-    def split_long_text(self, text, max_length=500):
-        """Divide texto largo en párrafos más pequeños"""
-        if not text or len(text) <= max_length:
-            return [text] if text else []
-        
-        paragraphs = []
-        sentences = text.split('. ')
-        current_paragraph = ""
-        
-        for sentence in sentences:
-            if len(current_paragraph + sentence) <= max_length:
-                current_paragraph += sentence + ". "
-            else:
-                if current_paragraph:
-                    paragraphs.append(current_paragraph.strip())
-                current_paragraph = sentence + ". "
-        
-        if current_paragraph:
-            paragraphs.append(current_paragraph.strip())
-        
-        return paragraphs
