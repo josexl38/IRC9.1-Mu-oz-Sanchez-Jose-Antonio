@@ -372,31 +372,43 @@ class CyberScopePDFGenerator:
         elements.append(Paragraph(title, self.styles['CyberScopeTitle']))
         elements.append(Spacer(1, 0.3*inch))
         
-        # Texto simplificado
+        # Texto simplificado - CORREGIDO
         if ai_analysis.get('simplified_text'):
-            elements.append(Paragraph("Explicación Simplificada:", self.styles['SectionTitle']))
-            elements.append(Paragraph(simplified_text, self.styles['ChatGPTAnalysis']))
-            elements.append(Spacer(1, 0.2*inch))
+            elements.append(Paragraph("Explicacion Simplificada:", self.styles['SectionTitle']))
+            
+            # Limpiar y procesar el texto
+            simplified_text = self.clean_text_for_pdf(ai_analysis.get('simplified_text', ''))
+            
+            # Dividir en párrafos más pequeños
+            paragraphs = self.split_long_text(simplified_text, max_length=600)
+            
+            for paragraph in paragraphs:
+                if paragraph.strip():
+                    elements.append(Paragraph(paragraph, self.styles['ChatGPTAnalysis']))
+                    elements.append(Spacer(1, 0.1*inch))
         
         # Vulnerabilidades identificadas
         if ai_analysis.get('vulnerabilities'):
             elements.append(Paragraph("Vulnerabilidades Identificadas:", self.styles['SectionTitle']))
             for vuln in ai_analysis['vulnerabilities']:
-                elements.append(Paragraph(f"⚠️ {vuln}", self.styles['CriticalFinding']))
+                clean_vuln = self.clean_text_for_pdf(vuln)
+                elements.append(Paragraph(f"• {clean_vuln}", self.styles['CriticalFinding']))
             elements.append(Spacer(1, 0.2*inch))
         
         # Recomendaciones
         if ai_analysis.get('recommendations'):
             elements.append(Paragraph("Recomendaciones:", self.styles['SectionTitle']))
             for rec in ai_analysis['recommendations']:
-                elements.append(Paragraph(f"✓ {rec}", self.styles['Recommendation']))
+                clean_rec = self.clean_text_for_pdf(rec)
+                elements.append(Paragraph(f"• {clean_rec}", self.styles['Recommendation']))
             elements.append(Spacer(1, 0.2*inch))
         
         # Términos técnicos explicados
         if ai_analysis.get('technical_terms'):
-            elements.append(Paragraph("Glosario de Términos Técnicos:", self.styles['SectionTitle']))
+            elements.append(Paragraph("Glosario de Terminos Tecnicos:", self.styles['SectionTitle']))
             for term in ai_analysis['technical_terms']:
-                elements.append(Paragraph(f"📚 {term}", self.styles['NormalFinding']))
+                clean_term = self.clean_text_for_pdf(term)
+                elements.append(Paragraph(f"• {clean_term}", self.styles['NormalFinding']))
         
         return elements
 
