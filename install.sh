@@ -748,4 +748,4 @@ show_usage_examples() {
     echo ""
     echo -e "${YELLOW}Para usar CyberScope desde línea de comandos:${NC}"
     echo -e "${CYAN}cd $(pwd)${NC}"
-    echo -e "${CYAN}source cybersc
+    echo -e "${CYAN}source cybersc"
