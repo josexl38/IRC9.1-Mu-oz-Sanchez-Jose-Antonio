@@ -62,7 +62,12 @@ show_error() {
     echo -e "${RED}[✗]${NC} $message"
 }
 
-# Función para leer input del usuario (funciona con curl | bash)
+# Función para detectar si estamos en modo interactivo
+is_interactive() {
+    [ -t 0 ] && [ -r /dev/tty ]
+}
+
+# Función mejorada para leer input del usuario
 read_user_input() {
     local prompt="$1"
     local default="$2"
@@ -70,17 +75,20 @@ read_user_input() {
     
     echo -n "$prompt"
     
-    # Redirigir desde /dev/tty para funcionar con pipes
-    if [ -t 0 ]; then
-        # Terminal interactivo normal
-        read response
-    else
-        # Ejecutándose desde pipe (curl | bash)
+    # Intentar leer desde /dev/tty primero
+    if [ -r /dev/tty ]; then
+        # Terminal interactivo disponible
         read response < /dev/tty 2>/dev/null || {
-            # Si no puede leer de /dev/tty, usar el valor por defecto
-            show_warning "No se puede leer entrada interactiva, usando valor por defecto: $default"
+            # Si falla, usar el valor por defecto
+            show_warning "No se puede leer entrada. Usando valor por defecto: $default"
             response="$default"
+            echo "$default"
         }
+    else
+        # No hay terminal interactivo, usar valor por defecto
+        show_warning "Modo no interactivo detectado. Usando valor por defecto: $default"
+        response="$default"
+        echo "$default"
     fi
     
     # Si está vacío, usar el valor por defecto
@@ -358,8 +366,16 @@ install_docker() {
     echo -e "${YELLOW}Sin Docker solo tendrás acceso a la línea de comandos.${NC}"
     echo ""
     
-    # Usar la nueva función para leer input
-    install_docker_choice=$(read_user_input "¿Instalar Docker? (s/N): " "N")
+    # Verificar si estamos en modo interactivo
+    if is_interactive; then
+        install_docker_choice=$(read_user_input "¿Instalar Docker? (s/N): " "N")
+    else
+        show_warning "Modo no interactivo: Saltando instalación de Docker"
+        show_warning "Para instalar Docker después ejecuta: curl -fsSL https://get.docker.com | bash"
+        install_docker_choice="N"
+        DOCKER_AVAILABLE=false
+        return 1
+    fi
     
     if [[ $install_docker_choice =~ ^[SsYy]$ ]]; then
         show_progress "Instalando Docker..."
@@ -577,12 +593,25 @@ ask_web_interface() {
         echo "  🤖 Análisis inteligente con IA (Groq)"
         echo ""
         
-        # Usar la nueva función para leer input
-        web_choice=$(read_user_input "¿Ejecutar interfaz web? (s/N): " "N")
+        # Verificar si estamos en modo interactivo
+        if is_interactive; then
+            web_choice=$(read_user_input "¿Ejecutar interfaz web? (s/N): " "N")
+        else
+            show_warning "Modo no interactivo: No iniciando interfaz web automáticamente"
+            show_warning "Para iniciar después ejecuta: docker-compose up -d"
+            web_choice="N"
+            WEB_ENABLED=false
+            return 1
+        fi
         
         if [[ $web_choice =~ ^[SsYy]$ ]]; then
             echo ""
-            web_port=$(read_user_input "¿En qué puerto deseas ejecutar la interfaz web? (por defecto 5000): " "5000")
+            if is_interactive; then
+                web_port=$(read_user_input "¿En qué puerto deseas ejecutar la interfaz web? (por defecto 5000): " "5000")
+            else
+                web_port="5000"
+                show_warning "Usando puerto por defecto: 5000"
+            fi
             
             # Crear docker-compose.yml básico si no existe
             if [ ! -f "docker-compose.yml" ]; then
@@ -684,8 +713,16 @@ setup_groq_api() {
     echo "  4. Copia la key (empieza con 'gsk_')"
     echo ""
     
-    # Usar la nueva función para leer input
-    groq_choice=$(read_user_input "¿Configurar Groq AI? (s/N): " "N")
+    # Verificar si estamos en modo interactivo
+    if is_interactive; then
+        groq_choice=$(read_user_input "¿Configurar Groq AI? (s/N): " "N")
+    else
+        show_warning "Modo no interactivo: Saltando configuración de Groq AI"
+        show_warning "Para configurar después: echo 'GROQ_API_KEY=gsk_tu_key' > .env"
+        groq_choice="N"
+        echo "# GROQ_API_KEY=gsk_tu_api_key_aqui" > .env
+        return 1
+    fi
     
     if [[ $groq_choice =~ ^[SsYy]$ ]]; then
         echo ""
@@ -888,6 +925,27 @@ show_usage_examples() {
     echo "   • Hashes de archivos críticos"
     echo "   • Evidencia de compromiso"
     echo ""
+    
+    # Mostrar comandos específicos según el modo
+    if ! is_interactive; then
+        echo -e "${YELLOW}🤖 MODO NO INTERACTIVO DETECTADO:${NC}"
+        echo ""
+        echo -e "${GREEN}Para usar todas las funcionalidades:${NC}"
+        echo ""
+        echo -e "${CYAN}# Instalar Docker:${NC}"
+        echo -e "${CYAN}curl -fsSL https://get.docker.com | bash${NC}"
+        echo -e "${CYAN}sudo usermod -aG docker \$USER${NC}"
+        echo -e "${CYAN}newgrp docker${NC}"
+        echo ""
+        echo -e "${CYAN}# Iniciar interfaz web:${NC}"
+        echo -e "${CYAN}cd $(pwd)${NC}"
+        echo -e "${CYAN}docker-compose up -d${NC}"
+        echo ""
+        echo -e "${CYAN}# Configurar IA:${NC}"
+        echo -e "${CYAN}echo 'GROQ_API_KEY=gsk_tu_api_key' > .env${NC}"
+        echo -e "${CYAN}docker-compose restart${NC}"
+        echo ""
+    fi
     
     echo -e "${CYAN}============================================================================${NC}"
     echo -e "${GREEN}✅ ¡CyberScope v2.0 está completamente instalado y listo para usar!${NC}"
