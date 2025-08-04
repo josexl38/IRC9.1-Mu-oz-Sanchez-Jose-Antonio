@@ -25,8 +25,8 @@ DOCKER_AVAILABLE=false
 print_banner() {
     echo -e "${CYAN}"
     echo "============================================================================"
-    echo "   ____      _               ____                                ___   ___  "
-    echo "  / ___|   _| |__   ___ _ __/ ___|  ___ ___  _ __   ___  __   _ |___ \/ _ \ "
+    echo "   ____      _               ____                           ____  ___  "
+    echo "  / ___|   _| |__   ___ _ __/ ___|  ___ ___  _ __   ___  __ |___ \/ _ \ "
     echo " | |  | | | | '_ \ / _ \ '__\___ \ / __/ _ \| '_ \ / _ \ \ \ / / __) | | |"
     echo " | |__| |_| | |_) |  __/ |   ___) | (_| (_) | |_) |  __/  \ V / / __/| |_|"
     echo "  \____\__, |_.__/ \___|_|  |____/ \___\___/| .__/ \___|   \_/ |_____|\___/"
@@ -287,7 +287,7 @@ install_python_dependencies() {
     
     # Crear requirements.txt básico si no existe
     if [ ! -f "requirements.txt" ]; then
-        cat > requirements.txt << EOF
+        cat > requirements.txt << 'EOF'
 requests>=2.28.0
 paramiko>=2.11.0
 beautifulsoup4>=4.11.0
@@ -424,7 +424,7 @@ setup_ssh_permissions() {
     
     # Configurar SSH client
     if [ ! -f ~/.ssh/config ]; then
-        cat > ~/.ssh/config << EOF
+        cat > ~/.ssh/config << 'EOF'
 Host *
     StrictHostKeyChecking no
     UserKnownHostsFile=/dev/null
@@ -607,7 +607,7 @@ EOF
             
             # Crear Dockerfile básico si no existe
             if [ ! -f "Dockerfile" ]; then
-                cat > Dockerfile << EOF
+                cat > Dockerfile << 'EOF'
 FROM python:3.9-slim
 
 WORKDIR /app
@@ -730,7 +730,7 @@ show_usage_examples() {
         
         # Mostrar IP externa si está disponible
         EXTERNAL_IP=$(hostname -I | awk '{print $1}' 2>/dev/null || echo "")
-        if [ -n "$EXTERNAL_IP" ]; then
+        if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "127.0.0.1" ]; then
             echo -e "   ${CYAN}http://$EXTERNAL_IP:$WEB_PORT${NC}"
         fi
         echo ""
@@ -748,4 +748,190 @@ show_usage_examples() {
     echo ""
     echo -e "${YELLOW}Para usar CyberScope desde línea de comandos:${NC}"
     echo -e "${CYAN}cd $(pwd)${NC}"
-    echo -e "${CYAN}source cybersc"
+    echo -e "${CYAN}source cyberscope-env/bin/activate${NC}  # Activar entorno virtual"
+    echo -e "${CYAN}cd cyberscope${NC}"
+    echo -e "${CYAN}python main.py --help${NC}  # Ver todas las opciones"
+    echo ""
+    
+    echo -e "${YELLOW}📚 EJEMPLOS DE USO:${NC}"
+    echo ""
+    
+    echo -e "${GREEN}🔍 ANÁLISIS FORENSE:${NC}"
+    echo -e "${CYAN}python main.py --hash archivo.txt${NC}                    # Hash de archivo"
+    echo -e "${CYAN}python main.py --buscar /ruta/directorio --pdf${NC}       # Buscar archivos sospechosos"
+    echo -e "${CYAN}python main.py --exif imagen.jpg --json${NC}              # Metadatos EXIF"
+    echo -e "${CYAN}python main.py --pdfmeta documento.pdf${NC}               # Metadatos PDF"
+    echo -e "${CYAN}python main.py --ioc log.txt --pdf${NC}                   # Extraer IoCs"
+    echo ""
+    
+    echo -e "${GREEN}🌐 ANÁLISIS WEB:${NC}"
+    echo -e "${CYAN}python main.py --webscan https://ejemplo.com --pdf${NC}   # Análisis web básico"
+    echo -e "${CYAN}python main.py --vulnscan https://ejemplo.com${NC}        # Vulnerabilidades web"
+    echo -e "${CYAN}python main.py --sslcheck ejemplo.com${NC}                # Análisis SSL"
+    echo -e "${CYAN}python main.py --paramfuzz https://ejemplo.com/search${NC} # Fuzzing parámetros"
+    echo ""
+    
+    echo -e "${GREEN}🔧 PENTESTING:${NC}"
+    echo -e "${CYAN}python main.py --portscan 192.168.1.1 --pdf${NC}         # Escaneo de puertos"
+    echo -e "${CYAN}python main.py --pentest https://ejemplo.com --pdf${NC}   # Pentesting completo"
+    echo ""
+    
+    echo -e "${GREEN}🖥️ ANÁLISIS REMOTO SSH:${NC}"
+    echo -e "${CYAN}python main.py --remotessh --host 192.168.1.100 \\${NC}"
+    echo -e "${CYAN}               --user admin --key ~/.ssh/id_rsa \\${NC}"
+    echo -e "${CYAN}               --type comprehensive --pdf --json${NC}     # Análisis forense remoto"
+    echo ""
+    echo -e "${CYAN}python main.py --remotessh --host servidor.com \\${NC}"
+    echo -e "${CYAN}               --user root --password mi_pass \\${NC}"
+    echo -e "${CYAN}               --type vulnerability --pdf${NC}            # Solo vulnerabilidades"
+    echo ""
+    echo -e "${CYAN}python main.py --remotessh --host 10.0.0.50 \\${NC}"
+    echo -e "${CYAN}               --user forensic --key /home/user/.ssh/id_ed25519 \\${NC}"
+    echo -e "${CYAN}               --type forensic --json${NC}                # Análisis forense específico"
+    echo ""
+    
+    echo -e "${GREEN}🔗 OSINT:${NC}"
+    echo -e "${CYAN}python main.py --whois ejemplo.com${NC}                   # Información WHOIS"
+    echo -e "${CYAN}python main.py --ipinfo 8.8.8.8${NC}                     # Información de IP"
+    echo ""
+    
+    if [ "$WEB_ENABLED" = true ]; then
+        echo -e "${YELLOW}🐳 COMANDOS DOCKER:${NC}"
+        echo -e "${CYAN}docker-compose logs -f${NC}                           # Ver logs en tiempo real"
+        echo -e "${CYAN}docker-compose stop${NC}                              # Detener servicio"
+        echo -e "${CYAN}docker-compose start${NC}                             # Iniciar servicio"
+        echo -e "${CYAN}docker-compose restart${NC}                           # Reiniciar servicio"
+        echo -e "${CYAN}docker-compose down${NC}                              # Detener y eliminar contenedores"
+        echo ""
+    fi
+    
+    echo -e "${YELLOW}📁 ESTRUCTURA DE ARCHIVOS:${NC}"
+    echo "   📂 $(pwd)/"
+    echo "   ├── 📁 cyberscope/              # Código principal"
+    echo "   │   └── 📄 main.py              # Script principal CLI"
+    echo "   ├── 📁 cyberscope-env/          # Entorno virtual Python"
+    echo "   ├── 📁 reports/                 # Reportes generados"
+    echo "   ├── 📁 uploads/                 # Archivos subidos (interfaz web)"
+    echo "   ├── 📁 logs/                    # Logs de actividades"
+    echo "   ├── 📁 forensic_evidence/       # Evidencia forense remota"
+    echo "   ├── 📄 .env                     # Configuración de API keys"
+    echo "   ├── 📄 requirements.txt         # Dependencias Python"
+    echo "   ├── 📄 docker-compose.yml       # Configuración Docker"
+    echo "   └── 📄 Dockerfile               # Imagen Docker"
+    echo ""
+    
+    echo -e "${GREEN}🎯 CONSEJOS IMPORTANTES:${NC}"
+    echo "   • Siempre activa el entorno virtual antes de usar CLI"
+    echo "   • Usa --pdf o --json para guardar resultados importantes"
+    echo "   • Para análisis remotos, prefiere claves SSH sobre contraseñas"
+    echo "   • Los análisis remotos SSH no dejan rastros en el servidor objetivo"
+    echo "   • Revisa logs/ para detalles de ejecución"
+    echo "   • Configura Groq API para análisis inteligente gratuito"
+    echo "   • La interfaz web es más completa que la línea de comandos"
+    echo ""
+    
+    echo -e "${PURPLE}🔧 CONFIGURACIÓN ADICIONAL:${NC}"
+    echo ""
+    echo -e "${YELLOW}1. Para configurar Groq AI después:${NC}"
+    echo -e "${CYAN}   echo 'GROQ_API_KEY=gsk_tu_api_key' > .env${NC}"
+    echo ""
+    echo -e "${YELLOW}2. Para actualizar CyberScope:${NC}"
+    echo -e "${CYAN}   git pull origin main${NC}"
+    echo -e "${CYAN}   source cyberscope-env/bin/activate${NC}"
+    echo -e "${CYAN}   pip install -r requirements.txt --upgrade${NC}"
+    echo ""
+    echo -e "${YELLOW}3. Para reinstalar Docker después:${NC}"
+    echo -e "${CYAN}   curl -fsSL https://get.docker.com | bash${NC}"
+    echo -e "${CYAN}   sudo usermod -aG docker \$USER${NC}"
+    echo ""
+    
+    if [ "$WEB_ENABLED" = true ]; then
+        echo -e "${GREEN}🚀 ACCESO RÁPIDO:${NC}"
+        echo -e "   🌐 Interfaz Web: ${CYAN}http://localhost:$WEB_PORT${NC}"
+        
+        # Mostrar IP externa si está disponible
+        EXTERNAL_IP=$(hostname -I | awk '{print $1}' 2>/dev/null || echo "")
+        if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "127.0.0.1" ]; then
+            echo -e "   🌍 Acceso externo: ${CYAN}http://$EXTERNAL_IP:$WEB_PORT${NC}"
+        fi
+        echo ""
+    else
+        echo -e "${YELLOW}💡 PARA HABILITAR INTERFAZ WEB:${NC}"
+        echo -e "   1. Instala Docker: ${CYAN}curl -fsSL https://get.docker.com | bash${NC}"
+        echo -e "   2. Reinicia sesión o ejecuta: ${CYAN}newgrp docker${NC}"
+        echo -e "   3. Ejecuta: ${CYAN}docker-compose up -d${NC}"
+        echo ""
+    fi
+    
+    echo -e "${PURPLE}🛡️ TIPOS DE ANÁLISIS REMOTO SSH:${NC}"
+    echo ""
+    echo -e "${GREEN}comprehensive${NC} - Análisis completo del sistema:"
+    echo "   • Información del sistema y hardware"
+    echo "   • Procesos y servicios en ejecución"
+    echo "   • Usuarios y grupos"
+    echo "   • Conexiones de red"
+    echo "   • Archivos de configuración críticos"
+    echo "   • Logs del sistema"
+    echo "   • Análisis forense básico"
+    echo ""
+    echo -e "${GREEN}vulnerability${NC} - Enfoque en vulnerabilidades:"
+    echo "   • Escaneo de puertos internos"
+    echo "   • Servicios con vulnerabilidades conocidas"
+    echo "   • Configuraciones inseguras"
+    echo "   • Permisos incorrectos de archivos"
+    echo "   • Usuarios con privilegios elevados"
+    echo ""
+    echo -e "${GREEN}forensic${NC} - Análisis forense específico:"
+    echo "   • Artefactos del sistema"
+    echo "   • Líneas de tiempo de archivos"
+    echo "   • Análisis de memoria (si es posible)"
+    echo "   • Hashes de archivos críticos"
+    echo "   • Evidencia de compromiso"
+    echo ""
+    
+    echo -e "${CYAN}============================================================================${NC}"
+    echo -e "${GREEN}✅ ¡CyberScope v2.0 está completamente instalado y listo para usar!${NC}"
+    echo ""
+    echo -e "${YELLOW}📖 Documentación completa: ${CYAN}https://github.com/josexl38/IRC9.1-Mu-oz-Sanchez-Jose-Antonio${NC}"
+    echo -e "${YELLOW}🐛 Reportar issues: ${CYAN}https://github.com/josexl38/IRC9.1-Mu-oz-Sanchez-Jose-Antonio/issues${NC}"
+    echo -e "${CYAN}============================================================================${NC}"
+}
+
+# Función principal
+main() {
+    print_banner
+    
+    # Verificaciones iniciales
+    detect_os
+    check_privileges
+    
+    # Descargar repositorio si no existe
+    download_repository
+    
+    # Instalación
+    install_system_dependencies
+    create_python_env
+    install_python_dependencies
+    
+    # Crear archivos básicos
+    create_directories
+    create_main_file
+    
+    # Instalación opcional de Docker
+    install_docker
+    
+    # Configuración
+    setup_ssh_permissions
+    
+    # Configuración opcional de interfaz web
+    ask_web_interface
+    
+    # Configuración opcional de IA
+    setup_groq_api
+    
+    # Mostrar ejemplos de uso
+    show_usage_examples
+}
+
+# Ejecutar función principal
+main "$@"
