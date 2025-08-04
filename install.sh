@@ -25,8 +25,8 @@ DOCKER_AVAILABLE=false
 print_banner() {
     echo -e "${CYAN}"
     echo "============================================================================"
-    echo "   ____      _               ____                                ___   ___  "
-    echo "  / ___|   _| |__   ___ _ __/ ___|  ___ ___  _ __   ___  __     |___ \/ _ \ "
+    echo "   ____      _               ____                           ____  ___  "
+    echo "  / ___|   _| |__   ___ _ __/ ___|  ___ ___  _ __   ___  __ |___ \/ _ \ "
     echo " | |  | | | | '_ \ / _ \ '__\___ \ / __/ _ \| '_ \ / _ \ \ \ / / __) | | |"
     echo " | |__| |_| | |_) |  __/ |   ___) | (_| (_) | |_) |  __/  \ V / / __/| |_|"
     echo "  \____\__, |_.__/ \___|_|  |____/ \___\___/| .__/ \___|   \_/ |_____|\___/"
@@ -60,6 +60,30 @@ show_warning() {
 show_error() {
     local message="$1"
     echo -e "${RED}[✗]${NC} $message"
+}
+
+# Función para leer input del usuario (funciona con curl | bash)
+read_user_input() {
+    local prompt="$1"
+    local default="$2"
+    local response
+    
+    # Redirigir stdin desde /dev/tty para funcionar con pipes
+    if [ -t 0 ]; then
+        # Terminal interactivo normal
+        read -p "$prompt" response
+    else
+        # Ejecutándose desde pipe (curl | bash)
+        echo -n "$prompt"
+        read response < /dev/tty
+    fi
+    
+    # Si está vacío, usar el valor por defecto
+    if [ -z "$response" ]; then
+        response="$default"
+    fi
+    
+    echo "$response"
 }
 
 # Detectar sistema operativo
@@ -262,7 +286,8 @@ install_docker() {
     echo -e "${YELLOW}Sin Docker solo tendrás acceso a la línea de comandos.${NC}"
     echo ""
     
-    read -p "¿Instalar Docker? (s/N): " install_docker_choice
+    # Usar la nueva función para leer input
+    install_docker_choice=$(read_user_input "¿Instalar Docker? (s/N): " "N")
     
     if [[ $install_docker_choice =~ ^[Ss]$ ]]; then
         show_progress "Instalando Docker..."
@@ -362,12 +387,12 @@ ask_web_interface() {
         echo "  🤖 Análisis inteligente con IA (Groq)"
         echo ""
         
-        read -p "¿Ejecutar interfaz web? (s/N): " web_choice
+        # Usar la nueva función para leer input
+        web_choice=$(read_user_input "¿Ejecutar interfaz web? (s/N): " "N")
         
         if [[ $web_choice =~ ^[Ss]$ ]]; then
             echo ""
-            read -p "¿En qué puerto deseas ejecutar la interfaz web? (por defecto 5000): " web_port
-            web_port=${web_port:-5000}
+            web_port=$(read_user_input "¿En qué puerto deseas ejecutar la interfaz web? (por defecto 5000): " "5000")
             
             # Modificar docker-compose.yml con el puerto elegido
             if [ -f "docker-compose.yml" ]; then
@@ -435,11 +460,12 @@ setup_groq_api() {
     echo "  4. Copia la key (empieza con 'gsk_')"
     echo ""
     
-    read -p "¿Configurar Groq AI? (s/N): " groq_choice
+    # Usar la nueva función para leer input
+    groq_choice=$(read_user_input "¿Configurar Groq AI? (s/N): " "N")
     
     if [[ $groq_choice =~ ^[Ss]$ ]]; then
         echo ""
-        read -p "Ingresa tu API key de Groq (gsk_...): " groq_api_key
+        groq_api_key=$(read_user_input "Ingresa tu API key de Groq (gsk_...): " "")
         
         if [[ $groq_api_key =~ ^gsk_ ]]; then
             echo "GROQ_API_KEY=$groq_api_key" > .env
