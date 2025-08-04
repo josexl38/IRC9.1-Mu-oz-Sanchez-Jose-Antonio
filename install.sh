@@ -33,7 +33,7 @@ print_banner() {
     echo "        |___/                               |_|                           "
     echo ""
     echo "        Sistema de Análisis Forense Digital y Pentesting"
-    echo "                    Instalador Automático"
+    echo "                    Instalador Automático v2.0"
     echo "============================================================================"
     echo -e "${NC}"
 }
@@ -68,14 +68,19 @@ read_user_input() {
     local default="$2"
     local response
     
-    # Redirigir stdin desde /dev/tty para funcionar con pipes
+    echo -n "$prompt"
+    
+    # Redirigir desde /dev/tty para funcionar con pipes
     if [ -t 0 ]; then
         # Terminal interactivo normal
-        read -p "$prompt" response
+        read response
     else
         # Ejecutándose desde pipe (curl | bash)
-        echo -n "$prompt"
-        read response < /dev/tty
+        read response < /dev/tty 2>/dev/null || {
+            # Si no puede leer de /dev/tty, usar el valor por defecto
+            show_warning "No se puede leer entrada interactiva, usando valor por defecto: $default"
+            response="$default"
+        }
     fi
     
     # Si está vacío, usar el valor por defecto
@@ -95,9 +100,12 @@ detect_os() {
         elif [ -f /etc/redhat-release ]; then
             OS="redhat"
             DISTRO=$(cat /etc/redhat-release | cut -d' ' -f1)
+        elif [ -f /etc/arch-release ]; then
+            OS="arch"
+            DISTRO="Arch Linux"
         else
             OS="linux"
-            DISTRO="Unknown"
+            DISTRO="Unknown Linux"
         fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         OS="macos"
@@ -140,6 +148,9 @@ download_repository() {
                     ;;
                 "redhat")
                     $SUDO yum install -y git >/dev/null 2>&1
+                    ;;
+                "arch")
+                    $SUDO pacman -S --noconfirm git >/dev/null 2>&1
                     ;;
                 "macos")
                     if command -v brew >/dev/null 2>&1; then
@@ -212,6 +223,28 @@ install_system_dependencies() {
                 libffi-devel \
                 >/dev/null 2>&1
             ;;
+        "arch")
+            $SUDO pacman -Sy --noconfirm \
+                python \
+                python-pip \
+                curl \
+                wget \
+                whois \
+                bind-tools \
+                netcat \
+                openssh \
+                sshpass \
+                expect \
+                net-tools \
+                iputils \
+                traceroute \
+                inetutils \
+                git \
+                base-devel \
+                openssl \
+                libffi \
+                >/dev/null 2>&1
+            ;;
         "macos")
             if ! command -v brew >/dev/null 2>&1; then
                 show_progress "Instalando Homebrew..."
@@ -252,6 +285,45 @@ install_python_dependencies() {
     # Activar entorno virtual
     source cyberscope-env/bin/activate
     
+    # Crear requirements.txt básico si no existe
+    if [ ! -f "requirements.txt" ]; then
+        cat > requirements.txt << EOF
+requests>=2.28.0
+paramiko>=2.11.0
+beautifulsoup4>=4.11.0
+cryptography>=3.4.8
+Pillow>=9.0.0
+PyPDF2>=2.12.0
+python-whois>=0.7.3
+dnspython>=2.2.1
+scapy>=2.4.5
+python-nmap>=0.7.1
+reportlab>=3.6.0
+fpdf2>=2.5.0
+colorama>=0.4.4
+tabulate>=0.8.9
+lxml>=4.6.3
+selenium>=4.0.0
+python-magic>=0.4.24
+hashlib-compat>=1.0.0
+ExifRead>=2.3.2
+python-dateutil>=2.8.2
+urllib3>=1.26.0
+certifi>=2021.10.8
+chardet>=4.0.0
+idna>=3.3
+click>=8.0.0
+flask>=2.0.0
+werkzeug>=2.0.0
+jinja2>=3.0.0
+markupsafe>=2.0.0
+itsdangerous>=2.0.0
+gunicorn>=20.1.0
+python-dotenv>=0.19.0
+groq>=0.3.0
+EOF
+    fi
+    
     # Instalar dependencias principales
     pip install -r requirements.txt >/dev/null 2>&1
     
@@ -289,7 +361,7 @@ install_docker() {
     # Usar la nueva función para leer input
     install_docker_choice=$(read_user_input "¿Instalar Docker? (s/N): " "N")
     
-    if [[ $install_docker_choice =~ ^[Ss]$ ]]; then
+    if [[ $install_docker_choice =~ ^[SsYy]$ ]]; then
         show_progress "Instalando Docker..."
         
         case $OS in
@@ -316,6 +388,13 @@ install_docker() {
                 # Instalar Docker Compose
                 $SUDO curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose >/dev/null 2>&1
                 $SUDO chmod +x /usr/local/bin/docker-compose
+                ;;
+            "arch")
+                # Instalar Docker en Arch Linux
+                $SUDO pacman -S --noconfirm docker docker-compose >/dev/null 2>&1
+                $SUDO systemctl start docker >/dev/null 2>&1
+                $SUDO systemctl enable docker >/dev/null 2>&1
+                $SUDO usermod -aG docker $USER >/dev/null 2>&1
                 ;;
             "macos")
                 show_warning "En macOS, instala Docker Desktop desde: https://www.docker.com/products/docker-desktop"
@@ -362,10 +441,121 @@ EOF
 create_directories() {
     show_progress "Creando directorios necesarios..."
     
-    mkdir -p uploads reports logs forensic_evidence
-    chmod 755 uploads reports logs forensic_evidence
+    mkdir -p uploads reports logs forensic_evidence cyberscope
+    chmod 755 uploads reports logs forensic_evidence cyberscope
     
     show_success "Directorios creados"
+}
+
+# Crear archivo main.py básico si no existe
+create_main_file() {
+    if [ ! -f "cyberscope/main.py" ]; then
+        show_progress "Creando archivo principal..."
+        
+        cat > cyberscope/main.py << 'EOF'
+#!/usr/bin/env python3
+"""
+CyberScope v2.0 - Sistema de Análisis Forense Digital y Pentesting
+"""
+
+import argparse
+import sys
+import os
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='CyberScope v2.0 - Sistema de Análisis Forense Digital y Pentesting',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Ejemplos de uso:
+  
+ANÁLISIS FORENSE:
+  python main.py --hash archivo.txt
+  python main.py --exif imagen.jpg --json
+  python main.py --pdfmeta documento.pdf
+  
+ANÁLISIS WEB:
+  python main.py --webscan https://ejemplo.com --pdf
+  python main.py --vulnscan https://ejemplo.com
+  
+PENTESTING:
+  python main.py --portscan 192.168.1.1 --pdf
+  python main.py --pentest https://ejemplo.com --pdf
+
+ANÁLISIS REMOTO SSH:
+  python main.py --remotessh --host 192.168.1.100 --user admin --key ~/.ssh/id_rsa --type comprehensive --pdf
+
+OSINT:
+  python main.py --whois ejemplo.com
+  python main.py --ipinfo 8.8.8.8
+        """
+    )
+    
+    # Análisis forense
+    parser.add_argument('--hash', help='Calcular hash SHA256 de archivo')
+    parser.add_argument('--exif', help='Extraer metadatos EXIF de imagen')
+    parser.add_argument('--pdfmeta', help='Extraer metadatos de PDF')
+    parser.add_argument('--buscar', help='Buscar archivos sospechosos en directorio')
+    parser.add_argument('--ioc', help='Extraer IoCs de archivo de log')
+    
+    # Análisis web
+    parser.add_argument('--webscan', help='Análisis básico de sitio web')
+    parser.add_argument('--vulnscan', help='Escaneo de vulnerabilidades web')
+    parser.add_argument('--sslcheck', help='Análisis de certificado SSL')
+    parser.add_argument('--paramfuzz', help='Fuzzing de parámetros web')
+    
+    # Pentesting
+    parser.add_argument('--portscan', help='Escaneo de puertos')
+    parser.add_argument('--pentest', help='Pentesting completo')
+    
+    # Análisis remoto SSH
+    parser.add_argument('--remotessh', action='store_true', help='Análisis remoto SSH')
+    parser.add_argument('--host', help='Host remoto para análisis SSH')
+    parser.add_argument('--user', help='Usuario SSH')
+    parser.add_argument('--password', help='Contraseña SSH')
+    parser.add_argument('--key', help='Archivo de clave SSH privada')
+    parser.add_argument('--type', choices=['comprehensive', 'vulnerability', 'forensic'], 
+                       default='comprehensive', help='Tipo de análisis remoto')
+    
+    # OSINT
+    parser.add_argument('--whois', help='Información WHOIS de dominio')
+    parser.add_argument('--ipinfo', help='Información de dirección IP')
+    
+    # Formatos de salida
+    parser.add_argument('--pdf', action='store_true', help='Generar reporte PDF')
+    parser.add_argument('--json', action='store_true', help='Generar reporte JSON')
+    
+    args = parser.parse_args()
+    
+    if len(sys.argv) == 1:
+        parser.print_help()
+        return
+    
+    print("🔧 CyberScope v2.0 - Sistema en desarrollo")
+    print("📋 Para funcionalidad completa, usa la interfaz web con Docker")
+    print("🌐 Ejecuta: docker-compose up -d")
+    print("")
+    
+    # Implementación básica
+    if args.hash:
+        print(f"🔍 Calculando hash de: {args.hash}")
+    elif args.webscan:
+        print(f"🌐 Analizando sitio web: {args.webscan}")
+    elif args.remotessh:
+        if not args.host:
+            print("❌ Error: --host es requerido para análisis SSH")
+            return
+        print(f"🖥️ Análisis SSH remoto en: {args.host}")
+    else:
+        print("ℹ️ Funcionalidad en desarrollo...")
+
+if __name__ == "__main__":
+    main()
+EOF
+        
+        chmod +x cyberscope/main.py
+        show_success "Archivo principal creado"
+    fi
 }
 
 # Preguntar sobre interfaz web
@@ -390,13 +580,47 @@ ask_web_interface() {
         # Usar la nueva función para leer input
         web_choice=$(read_user_input "¿Ejecutar interfaz web? (s/N): " "N")
         
-        if [[ $web_choice =~ ^[Ss]$ ]]; then
+        if [[ $web_choice =~ ^[SsYy]$ ]]; then
             echo ""
             web_port=$(read_user_input "¿En qué puerto deseas ejecutar la interfaz web? (por defecto 5000): " "5000")
             
-            # Modificar docker-compose.yml con el puerto elegido
-            if [ -f "docker-compose.yml" ]; then
-                sed -i.bak "s/5000:5000/${web_port}:5000/g" docker-compose.yml
+            # Crear docker-compose.yml básico si no existe
+            if [ ! -f "docker-compose.yml" ]; then
+                cat > docker-compose.yml << EOF
+version: '3.8'
+services:
+  cyberscope:
+    build: .
+    ports:
+      - "${web_port}:5000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+      - ./forensic_evidence:/app/forensic_evidence
+    environment:
+      - FLASK_ENV=production
+      - GROQ_API_KEY=\${GROQ_API_KEY:-}
+    restart: unless-stopped
+EOF
+            fi
+            
+            # Crear Dockerfile básico si no existe
+            if [ ! -f "Dockerfile" ]; then
+                cat > Dockerfile << EOF
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
+EOF
             fi
             
             show_progress "Construyendo contenedor Docker..."
@@ -463,7 +687,7 @@ setup_groq_api() {
     # Usar la nueva función para leer input
     groq_choice=$(read_user_input "¿Configurar Groq AI? (s/N): " "N")
     
-    if [[ $groq_choice =~ ^[Ss]$ ]]; then
+    if [[ $groq_choice =~ ^[SsYy]$ ]]; then
         echo ""
         groq_api_key=$(read_user_input "Ingresa tu API key de Groq (gsk_...): " "")
         
@@ -524,117 +748,4 @@ show_usage_examples() {
     echo ""
     echo -e "${YELLOW}Para usar CyberScope desde línea de comandos:${NC}"
     echo -e "${CYAN}cd $(pwd)${NC}"
-    echo -e "${CYAN}source cyberscope-env/bin/activate${NC}  # Activar entorno virtual"
-    echo -e "${CYAN}cd cyberscope${NC}"
-    echo -e "${CYAN}python main.py --help${NC}  # Ver todas las opciones"
-    echo ""
-    
-    echo -e "${YELLOW}📚 EJEMPLOS DE USO:${NC}"
-    echo ""
-    
-    echo -e "${GREEN}🔍 ANÁLISIS FORENSE:${NC}"
-    echo -e "${CYAN}python main.py --hash archivo.txt${NC}                    # Hash de archivo"
-    echo -e "${CYAN}python main.py --buscar /ruta/directorio --pdf${NC}       # Buscar archivos sospechosos"
-    echo -e "${CYAN}python main.py --exif imagen.jpg --json${NC}              # Metadatos EXIF"
-    echo -e "${CYAN}python main.py --pdfmeta documento.pdf${NC}               # Metadatos PDF"
-    echo -e "${CYAN}python main.py --ioc log.txt --pdf${NC}                   # Extraer IoCs"
-    echo ""
-    
-    echo -e "${GREEN}🌐 ANÁLISIS WEB:${NC}"
-    echo -e "${CYAN}python main.py --webscan https://ejemplo.com --pdf${NC}   # Análisis web básico"
-    echo -e "${CYAN}python main.py --vulnscan https://ejemplo.com${NC}        # Vulnerabilidades web"
-    echo -e "${CYAN}python main.py --sslcheck ejemplo.com${NC}                # Análisis SSL"
-    echo -e "${CYAN}python main.py --paramfuzz https://ejemplo.com/search${NC} # Fuzzing parámetros"
-    echo ""
-    
-    echo -e "${GREEN}🔧 PENTESTING:${NC}"
-    echo -e "${CYAN}python main.py --portscan 192.168.1.1 --pdf${NC}         # Escaneo de puertos"
-    echo -e "${CYAN}python main.py --pentest https://ejemplo.com --pdf${NC}   # Pentesting completo"
-    echo ""
-    
-    echo -e "${GREEN}🖥️ ANÁLISIS REMOTO SSH:${NC}"
-    echo -e "${CYAN}python main.py --remotessh --host 192.168.1.100 \\${NC}"
-    echo -e "${CYAN}               --user admin --key ~/.ssh/id_rsa \\${NC}"
-    echo -e "${CYAN}               --type comprehensive --pdf --json${NC}     # Análisis forense remoto"
-    echo ""
-    echo -e "${CYAN}python main.py --remotessh --host servidor.com \\${NC}"
-    echo -e "${CYAN}               --user root --password mi_pass \\${NC}"
-    echo -e "${CYAN}               --type vulnerability --pdf${NC}            # Solo vulnerabilidades"
-    echo ""
-    
-    echo -e "${GREEN}🔗 OSINT:${NC}"
-    echo -e "${CYAN}python main.py --whois ejemplo.com${NC}                   # Información WHOIS"
-    echo -e "${CYAN}python main.py --ipinfo 8.8.8.8${NC}                     # Información de IP"
-    echo ""
-    
-    if [ "$WEB_ENABLED" = true ]; then
-        echo -e "${YELLOW}🐳 COMANDOS DOCKER:${NC}"
-        echo -e "${CYAN}docker-compose logs -f${NC}                           # Ver logs en tiempo real"
-        echo -e "${CYAN}docker-compose stop${NC}                              # Detener servicio"
-        echo -e "${CYAN}docker-compose start${NC}                             # Iniciar servicio"
-        echo -e "${CYAN}docker-compose restart${NC}                           # Reiniciar servicio"
-        echo ""
-    fi
-    
-    echo -e "${YELLOW}📁 ARCHIVOS IMPORTANTES:${NC}"
-    echo "   cyberscope.log           Log de actividades"
-    echo "   reports/                 Reportes generados"
-    echo "   uploads/                 Archivos subidos (interfaz web)"
-    echo "   forensic_evidence/       Evidencia forense remota"
-    echo "   .env                     Configuración de API keys"
-    echo ""
-    
-    echo -e "${GREEN}🎯 CONSEJOS:${NC}"
-    echo "   • Usa siempre --pdf o --json para guardar resultados"
-    echo "   • Para análisis remoto, prefiere claves SSH sobre contraseñas"
-    echo "   • Los análisis remotos no dejan rastros en el servidor objetivo"
-    echo "   • Revisa cyberscope.log para detalles de ejecución"
-    echo "   • Configura Groq API para análisis inteligente"
-    echo ""
-    
-    if [ "$WEB_ENABLED" = true ]; then
-        echo -e "${GREEN}🚀 ACCESO RÁPIDO:${NC}"
-        echo -e "   Interfaz Web: ${CYAN}http://localhost:$WEB_PORT${NC}"
-        echo ""
-    fi
-    
-    echo -e "${CYAN}============================================================================${NC}"
-    echo -e "${GREEN}¡CyberScope v2.0 está listo para usar!${NC}"
-    echo -e "${CYAN}============================================================================${NC}"
-}
-
-# Función principal
-main() {
-    print_banner
-    
-    # Verificaciones iniciales
-    detect_os
-    check_privileges
-    
-    # Descargar repositorio si no existe
-    download_repository
-    
-    # Instalación
-    install_system_dependencies
-    create_python_env
-    install_python_dependencies
-    
-    # Instalación opcional de Docker
-    install_docker
-    
-    # Configuración
-    setup_ssh_permissions
-    create_directories
-    
-    # Configuración opcional de interfaz web
-    ask_web_interface
-    
-    # Configuración opcional de IA
-    setup_groq_api
-    
-    # Mostrar ejemplos de uso
-    show_usage_examples
-}
-
-# Ejecutar función principal
-main "$@"
+    echo -e "${CYAN}source cybersc
