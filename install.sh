@@ -374,7 +374,7 @@ install_docker() {
         show_warning "Para instalar Docker después ejecuta: curl -fsSL https://get.docker.com | bash"
         install_docker_choice="N"
         DOCKER_AVAILABLE=false
-        return 1
+        return 0  # Cambiar de return 1 a return 0
     fi
     
     if [[ $install_docker_choice =~ ^[SsYy]$ ]]; then
@@ -415,7 +415,7 @@ install_docker() {
             "macos")
                 show_warning "En macOS, instala Docker Desktop desde: https://www.docker.com/products/docker-desktop"
                 DOCKER_AVAILABLE=false
-                return 1
+                return 0
                 ;;
         esac
         
@@ -426,7 +426,7 @@ install_docker() {
     else
         show_warning "Docker no instalado. Solo estará disponible la versión de línea de comandos."
         DOCKER_AVAILABLE=false
-        return 1
+        return 0
     fi
 }
 
@@ -601,7 +601,7 @@ ask_web_interface() {
             show_warning "Para iniciar después ejecuta: docker-compose up -d"
             web_choice="N"
             WEB_ENABLED=false
-            return 1
+            return 0  # Cambiar de return 1 a return 0
         fi
         
         if [[ $web_choice =~ ^[SsYy]$ ]]; then
@@ -689,6 +689,7 @@ EOF
         show_warning "Docker no disponible. Solo estará disponible la versión de línea de comandos."
         WEB_ENABLED=false
     fi
+    return 0  # Asegurar que siempre retorne 0
 }
 
 # Configurar API de Groq (opcional)
@@ -721,7 +722,7 @@ setup_groq_api() {
         show_warning "Para configurar después: echo 'GROQ_API_KEY=gsk_tu_key' > .env"
         groq_choice="N"
         echo "# GROQ_API_KEY=gsk_tu_api_key_aqui" > .env
-        return 1
+        return 0  # Cambiar de return 1 a return 0
     fi
     
     if [[ $groq_choice =~ ^[SsYy]$ ]]; then
@@ -747,6 +748,7 @@ setup_groq_api() {
         show_warning "IA no configurada. CyberScope usará analizador de respaldo"
         echo "# GROQ_API_KEY=gsk_tu_api_key_aqui" > .env
     fi
+    return 0  # Asegurar que siempre retorne 0
 }
 
 # Mostrar ejemplos de uso
