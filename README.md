@@ -1,8 +1,36 @@
 # IRC9.1-Mu-oz-Sanchez-Jose-Antonio
 
-## CyberScope v2.0 - Herramienta de Análisis Forense Digital y Pentesting
+## 🛡️ CyberScope v2.0 - Herramienta de Análisis Forense Digital y Pentesting
 
-### 🌐 Interfaz Web con Docker
+## 🚀 Instalación Automática (Recomendada)
+
+**Instala y ejecuta CyberScope con un solo comando:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/josexl38/IRC9.1-Mu-oz-Sanchez-Jose-Antonio/main/install.sh | bash
+```
+
+O si prefieres descargar manualmente:
+
+```bash
+git clone https://github.com/josexl38/IRC9.1-Mu-oz-Sanchez-Jose-Antonio.git
+cd IRC9.1-Mu-oz-Sanchez-Jose-Antonio
+chmod +x install.sh
+./install.sh
+```
+
+### ✨ El instalador automático:
+- 🔧 **Detecta tu sistema operativo** (Ubuntu, CentOS, macOS)
+- 📦 **Instala todas las dependencias** automáticamente
+- 🐍 **Crea entorno virtual Python** aislado
+- 🐳 **Instala Docker** (opcional) para interfaz web
+- ⚙️ **Configura SSH** para análisis remotos
+- 🌐 **Inicia interfaz web** (opcional) en el puerto que elijas
+- 📚 **Muestra ejemplos de uso** completos
+
+---
+
+## 🌐 Interfaz Web Moderna
 
 CyberScope ahora incluye una interfaz web moderna desarrollada con Flask que permite:
 
@@ -14,6 +42,19 @@ CyberScope ahora incluye una interfaz web moderna desarrollada con Flask que per
 - **🤖 Análisis Inteligente con IA**: Integración con ChatGPT para explicaciones comprensibles
 - **📄 Reportes PDF Mejorados**: Generación automática de reportes profesionales
 
+### 🎯 Acceso Rápido a la Interfaz Web
+
+Si instalaste con el script automático y elegiste la interfaz web:
+
+```bash
+# La interfaz estará disponible en:
+http://localhost:PUERTO_ELEGIDO
+
+# Ejemplo: http://localhost:5000
+```
+
+### 🐳 Instalación Manual con Docker
+
 #### 🚀 Ejecutar con Docker
 
 ```bash
@@ -23,6 +64,8 @@ docker compose up --build -d
 # Acceder a la interfaz web
 # http://localhost:5000
 ```
+
+---
 
 #### 🔧 Configuración de ChatGPT (Opcional)
 
@@ -77,7 +120,9 @@ docker-compose up --build
 - ✅ **⚠️ Evaluación de riesgos**: Clasificación automática de vulnerabilidades
 - ✅ **💡 Recomendaciones**: Sugerencias específicas de seguridad
 
-### Instalación
+---
+
+## 📋 Instalación Manual (Avanzada)
 
 1. Clona el repositorio:
 ```bash
@@ -98,7 +143,9 @@ cyberscope-env\Scripts\activate     # En Windows
 pip install -r requirements.txt
 ```
 
-### Uso
+---
+
+## 💻 Uso por Línea de Comandos
 
 #### Línea de comandos:
 ```bash
@@ -106,13 +153,9 @@ cd cyberscope
 python main.py --help
 ```
 
-#### Interfaz Web:
-```bash
-docker-compose up --build
-# Abrir http://localhost:5000 en el navegador
-```
+### 📚 Ejemplos de Uso Completos
 
-### Ejemplos de uso:
+#### 🔍 Análisis Forense:
 
 ```bash
 # Hashear un archivo
@@ -124,21 +167,66 @@ python cyberscope/main.py --buscar /ruta/directorio --pdf
 # Extraer metadatos EXIF
 python cyberscope/main.py --exif imagen.jpg --json
 
-# Análisis web
-python cyberscope/main.py --webscan https://ejemplo.com --pdf
-
-# Pentesting
-python cyberscope/main.py --portscan 192.168.1.1 --pdf
-python cyberscope/main.py --vulnscan https://ejemplo.com --json
-python cyberscope/main.py --sslcheck ejemplo.com
-python cyberscope/main.py --paramfuzz https://ejemplo.com/search
-python cyberscope/main.py --pentest https://ejemplo.com --pdf --json
-
 # Extraer IoCs de un archivo
 python cyberscope/main.py --ioc log.txt --json --pdf
 ```
 
-### Características:
+#### 🌐 Análisis Web:
+
+```bash
+# Análisis web
+python cyberscope/main.py --webscan https://ejemplo.com --pdf
+
+# Detección de vulnerabilidades web
+python cyberscope/main.py --vulnscan https://ejemplo.com --json
+
+# Análisis SSL
+python cyberscope/main.py --sslcheck ejemplo.com
+
+# Fuzzing de parámetros
+python cyberscope/main.py --paramfuzz https://ejemplo.com/search
+```
+
+#### 🔧 Pentesting:
+
+```bash
+# Pentesting
+python cyberscope/main.py --portscan 192.168.1.1 --pdf
+python cyberscope/main.py --pentest https://ejemplo.com --pdf --json
+```
+
+#### 🖥️ Análisis Remoto SSH (Sin Rastros):
+
+```bash
+# Análisis completo con clave privada
+python cyberscope/main.py --remotessh --host 192.168.1.100 \
+                          --user admin --key ~/.ssh/id_rsa \
+                          --type comprehensive --pdf --json
+
+# Análisis rápido con contraseña
+python cyberscope/main.py --remotessh --host servidor.com \
+                          --user root --password mi_password \
+                          --type quick --pdf
+
+# Solo evaluación de vulnerabilidades
+python cyberscope/main.py --remotessh --host 10.0.0.50 \
+                          --user forensic --key /path/to/key \
+                          --type vulnerability --json
+```
+
+#### 🔗 OSINT:
+
+```bash
+# Información WHOIS
+python cyberscope/main.py --whois ejemplo.com
+
+# Información de IP
+python cyberscope/main.py --ipinfo 8.8.8.8
+```
+
+---
+
+## ✨ Características Completas:
 
 - ✅ Análisis forense de archivos (hashing MD5, SHA1, SHA256)
 - ✅ Extracción de metadatos EXIF de imágenes
@@ -157,7 +245,19 @@ python cyberscope/main.py --ioc log.txt --json --pdf
 - ✅ **📊 Evaluación de riesgos**: Clasificación automática de vulnerabilidades
 - ✅ **💡 Recomendaciones inteligentes**: Sugerencias específicas de seguridad
 
-### Interfaz Web:
+### 🖥️ Análisis Remoto SSH:
+
+- ✅ **Sin rastros**: No deja archivos en el servidor objetivo
+- ✅ **Análisis integral**: Sistema, usuarios, red, procesos, logs
+- ✅ **Evaluación de vulnerabilidades**: SSH, web, bases de datos, escalación de privilegios
+- ✅ **Evidencia forense**: Cadena de custodia y hashes de integridad
+- ✅ **Múltiples tipos de escaneo**: Rápido, vulnerabilidades, estándar, completo
+- ✅ **Configuración flexible**: Archivos YAML para personalización
+- ✅ **Autenticación múltiple**: Clave privada SSH y contraseña
+
+---
+
+## 🌐 Interfaz Web:
 
 - ✅ Interfaz web moderna con Flask
 - ✅ Análisis masivo de URLs
@@ -171,7 +271,9 @@ python cyberscope/main.py --ioc log.txt --json --pdf
 - ✅ **🎯 Dashboard intuitivo**: Interfaz comprensible para usuarios no técnicos
 - ✅ **🔗 Análisis Remoto SSH**: Análisis forense sin dejar rastros en servidores
 
-### Dependencias:
+---
+
+## 📦 Dependencias:
 
 - `requests`: Para análisis web
 - `beautifulsoup4`: Para parsing HTML
@@ -184,7 +286,9 @@ python cyberscope/main.py --ioc log.txt --json --pdf
 - `Werkzeug`: Utilidades web para Flask
 - `PyYAML`: Para archivos de configuración YAML
 
-### 🤖 Análisis Inteligente:
+---
+
+## 🤖 Análisis Inteligente:
 
 CyberScope integra capacidades de IA para hacer los resultados más comprensibles:
 
@@ -195,7 +299,9 @@ CyberScope integra capacidades de IA para hacer los resultados más comprensible
 - **Glosario técnico**: Explica términos especializados encontrados
 - **Análisis de respaldo**: Funciona sin API key usando reglas predefinidas
 
-### Arquitectura:
+---
+
+## 🏗️ Arquitectura:
 - **Versión modular**: Código organizado en módulos especializados
 - **Interfaz web**: Flask con templates Bootstrap para una experiencia moderna
 - **Dockerizado**: Fácil despliegue con Docker y docker-compose
@@ -203,7 +309,9 @@ CyberScope integra capacidades de IA para hacer los resultados más comprensible
 - **Reportes profesionales**: Generación automática de documentos PDF completos
 - **Análisis remoto SSH**: Capacidades forenses remotas sin rastros
 
-### 🔗 **Análisis Remoto SSH:**
+---
+
+## 🔗 Análisis Remoto SSH Detallado:
 
 CyberScope incluye capacidades avanzadas de análisis forense remoto:
 
@@ -222,3 +330,32 @@ CyberScope incluye capacidades avanzadas de análisis forense remoto:
 - ✅ **Análisis de logs** sin descargar archivos completos
 - ✅ **Evaluación de configuraciones** de seguridad
 - ✅ **Integración con IA** para análisis comprensible
+
+### 🎯 Tipos de Análisis Remoto:
+
+- **🚀 Quick**: Análisis rápido (~30 segundos) - Información básica del sistema
+- **📋 Standard**: Análisis estándar (~2 minutos) - Análisis forense completo  
+- **🐛 Vulnerability**: Solo vulnerabilidades (~1 minuto) - Evaluación de seguridad
+- **🔬 Comprehensive**: Análisis completo (~3 minutos) - Forense + Vulnerabilidades
+
+---
+
+## 🆘 Soporte y Documentación
+
+### 📞 Obtener Ayuda:
+```bash
+# Ver todas las opciones disponibles
+python cyberscope/main.py --help
+
+# Activar modo verbose para debugging
+python cyberscope/main.py --verbose [opciones]
+
+# Ver logs detallados
+tail -f cyberscope.log
+```
+
+### 📁 Archivos Importantes:
+- `cyberscope.log` - Log de todas las actividades
+- `reports/` - Reportes PDF y JSON generados
+- `forensic_evidence/` - Evidencia forense de análisis remotos
+- `uploads/` - Archivos subidos en interfaz web
