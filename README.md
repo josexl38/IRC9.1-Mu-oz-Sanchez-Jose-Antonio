@@ -1,5 +1,7 @@
 # IRC9.1-Mu-oz-Sanchez-Jose-Antonio
 
+> **⚠️ IMPORTANTE**: Este es un proyecto **100% Python**. No utiliza Node.js, npm, ni package.json. Todas las dependencias se gestionan con `pip` y `requirements.txt`. Los assets frontend se cargan vía CDN.
+
 ## 🛡️ CyberScope v2.0 - Herramienta de Análisis Forense Digital y Pentesting
 
 ## 🚀 Instalación Automática (Recomendada)
